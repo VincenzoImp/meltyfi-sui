@@ -1,7 +1,7 @@
 // src/components/layout/Hero.tsx
 'use client'
 
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { useCurrentAccount } from '@mysten/dapp-kit'
 import { motion } from 'framer-motion'
 import {

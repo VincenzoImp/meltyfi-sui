@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, IconButton } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import {
@@ -84,7 +84,7 @@ export function Navigation({ className }: NavigationProps) {
             <nav className={cn(
                 "sticky top-0 z-50 w-full transition-all duration-200",
                 isScrolled
-                    ? "bg-background/80 backdrop-blur-md border-b shadow-sm"
+                    ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40"
                     : "bg-transparent",
                 className
             )}>
@@ -96,10 +96,10 @@ export function Navigation({ className }: NavigationProps) {
                             className="flex items-center space-x-2 group"
                         >
                             <div className="relative">
-                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-melty-gold-400 to-melty-chocolate-500 shadow-lg group-hover:shadow-xl transition-shadow duration-200" />
-                                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-melty-gold-400 to-melty-chocolate-500 opacity-0 group-hover:opacity-20 blur-md transition-opacity duration-200" />
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 shadow-lg group-hover:shadow-xl transition-shadow duration-200" />
+                                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary to-purple-600 opacity-0 group-hover:opacity-20 blur-md transition-opacity duration-200" />
                             </div>
-                            <span className="font-bold text-xl bg-gradient-to-r from-primary to-melty-gold-500 bg-clip-text text-transparent">
+                            <span className="font-bold text-xl bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                                 MeltyFi
                             </span>
                         </Link>
@@ -119,7 +119,7 @@ export function Navigation({ className }: NavigationProps) {
                                             rel="noopener noreferrer"
                                             className={cn(
                                                 "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                                                "hover:bg-primary/10 hover:text-primary",
+                                                "hover:bg-accent hover:text-accent-foreground",
                                                 "text-muted-foreground"
                                             )}
                                         >
@@ -137,7 +137,7 @@ export function Navigation({ className }: NavigationProps) {
                                             "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                                             isActive
                                                 ? "bg-primary text-primary-foreground shadow-sm"
-                                                : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                         )}
                                     >
                                         {item.icon}
@@ -150,31 +150,41 @@ export function Navigation({ className }: NavigationProps) {
                         {/* Actions */}
                         <div className="flex items-center space-x-2">
                             {/* Theme Toggle */}
-                            <IconButton
+                            <Button
                                 variant="ghost"
-                                size="icon-sm"
+                                size="icon"
                                 onClick={toggleTheme}
-                                icon={theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                             >
-                                Toggle theme
-                            </IconButton>
+                                {theme === 'dark' ? (
+                                    <Sun className="h-4 w-4" />
+                                ) : (
+                                    <Moon className="h-4 w-4" />
+                                )}
+                                <span className="sr-only">Toggle theme</span>
+                            </Button>
 
                             {/* Wallet Connection - Placeholder */}
                             <Button variant="outline" size="sm" className="hidden sm:flex">
-                                <Wallet className="h-4 w-4" />
+                                <Wallet className="h-4 w-4 mr-2" />
                                 Connect Wallet
                             </Button>
 
                             {/* Mobile Menu Toggle */}
-                            <IconButton
+                            <Button
                                 variant="ghost"
-                                size="icon-sm"
+                                size="icon"
                                 className="md:hidden"
                                 onClick={() => setIsOpen(!isOpen)}
-                                icon={isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
                             >
-                                {isOpen ? 'Close menu' : 'Open menu'}
-                            </IconButton>
+                                {isOpen ? (
+                                    <X className="h-4 w-4" />
+                                ) : (
+                                    <Menu className="h-4 w-4" />
+                                )}
+                                <span className="sr-only">
+                                    {isOpen ? 'Close menu' : 'Open menu'}
+                                </span>
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -197,8 +207,8 @@ export function Navigation({ className }: NavigationProps) {
                     ? "translate-y-0 opacity-100"
                     : "-translate-y-full opacity-0 pointer-events-none"
             )}>
-                <Card className="m-4 p-4 shadow-xl border-border/50">
-                    <div className="space-y-2">
+                <Card className="m-4 shadow-xl">
+                    <div className="p-4 space-y-2">
                         {navigationItems.map((item) => {
                             const isActive = pathname === item.href
                             const isExternal = item.external
@@ -212,8 +222,8 @@ export function Navigation({ className }: NavigationProps) {
                                         rel="noopener noreferrer"
                                         className={cn(
                                             "flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
-                                            "hover:bg-primary/10 hover:text-primary text-muted-foreground",
-                                            "border border-transparent hover:border-primary/20"
+                                            "hover:bg-accent hover:text-accent-foreground",
+                                            "text-muted-foreground"
                                         )}
                                     >
                                         {item.icon}
@@ -229,8 +239,8 @@ export function Navigation({ className }: NavigationProps) {
                                     className={cn(
                                         "flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
                                         isActive
-                                            ? "bg-primary text-primary-foreground shadow-sm border border-primary/20"
-                                            : "text-muted-foreground hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20"
+                                            ? "bg-primary text-primary-foreground shadow-sm"
+                                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                     )}
                                 >
                                     {item.icon}
@@ -240,13 +250,13 @@ export function Navigation({ className }: NavigationProps) {
                         })}
 
                         {/* Mobile Wallet Button */}
-                        <div className="pt-4 border-t border-border/50">
+                        <div className="pt-4 border-t border-border">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 className="w-full justify-start"
                             >
-                                <Wallet className="h-4 w-4" />
+                                <Wallet className="h-4 w-4 mr-2" />
                                 Connect Wallet
                             </Button>
                         </div>
@@ -316,11 +326,11 @@ export function PageHeader({
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-2">
-                    <h1 className="melty-heading-1">
+                    <h1 className="text-3xl font-bold tracking-tight lg:text-4xl">
                         {title}
                     </h1>
                     {description && (
-                        <p className="melty-body-large text-muted-foreground max-w-2xl">
+                        <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
                             {description}
                         </p>
                     )}

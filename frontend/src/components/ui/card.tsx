@@ -3,63 +3,35 @@ import { cva, type VariantProps } from "class-variance-authority"
 import * as React from "react"
 
 const cardVariants = cva(
-    [
-        "rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-200",
-        "hover:shadow-md"
-    ].join(" "),
+    "rounded-xl border bg-card text-card-foreground shadow",
     {
         variants: {
             variant: {
-                default: "border-border bg-card",
-                elevated: [
-                    "shadow-lg hover:shadow-xl",
-                    "bg-gradient-to-br from-card to-card/95"
-                ].join(" "),
-                glass: [
-                    "bg-white/5 backdrop-blur-md border-white/10",
-                    "shadow-lg hover:bg-white/10",
-                    "dark:bg-black/5 dark:border-white/5"
-                ].join(" "),
-                gradient: [
-                    "bg-gradient-to-br from-melty-chocolate-50 to-melty-gold-50",
-                    "border-melty-chocolate-200/50 shadow-md hover:shadow-lg",
-                    "dark:from-melty-chocolate-900/20 dark:to-melty-gold-900/20",
-                    "dark:border-melty-chocolate-800/50"
-                ].join(" "),
-                outline: [
-                    "border-2 border-primary/20 bg-transparent",
-                    "hover:border-primary/40 hover:bg-primary/5"
-                ].join(" "),
-                interactive: [
-                    "cursor-pointer hover:shadow-lg active:scale-[0.98]",
-                    "transform-gpu hover:-translate-y-1",
-                    "border-border/50 hover:border-primary/30"
-                ].join(" "),
-            },
-            size: {
-                sm: "p-4",
-                default: "p-6",
-                lg: "p-8",
-                xl: "p-10",
+                default: "border-border",
+                elevated: "shadow-lg",
+                interactive: "transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer",
+                outline: "border-2",
             },
         },
         defaultVariants: {
             variant: "default",
-            size: "default",
         },
     }
 )
 
-const Card = React.forwardRef<
-    HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof cardVariants>
->(({ className, variant, size, ...props }, ref) => (
-    <div
-        ref={ref}
-        className={cn(cardVariants({ variant, size }), className)}
-        {...props}
-    />
-))
+export interface CardProps
+    extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof cardVariants> { }
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+    ({ className, variant, ...props }, ref) => (
+        <div
+            ref={ref}
+            className={cn(cardVariants({ variant }), className)}
+            {...props}
+        />
+    )
+)
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<
@@ -71,8 +43,8 @@ const CardHeader = React.forwardRef<
     <div
         ref={ref}
         className={cn(
-            "flex flex-col space-y-1.5 pb-6",
-            centered && "text-center",
+            "flex flex-col space-y-1.5 p-6",
+            centered && "text-center items-center",
             className
         )}
         {...props}
@@ -81,22 +53,14 @@ const CardHeader = React.forwardRef<
 CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
-    HTMLHeadingElement,
-    React.HTMLAttributes<HTMLHeadingElement> & {
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement> & {
         as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
-        gradient?: boolean
     }
->(({ className, as: Comp = 'h3', gradient = false, children, ...props }, ref) => (
+>(({ className, as: Comp = 'h3', children, ...props }, ref) => (
     <Comp
         ref={ref}
-        className={cn(
-            "text-2xl font-semibold leading-none tracking-tight",
-            gradient && [
-                "bg-gradient-to-r from-primary to-melty-gold-500",
-                "bg-clip-text text-transparent"
-            ],
-            className
-        )}
+        className={cn("font-semibold leading-none tracking-tight", className)}
         {...props}
     >
         {children}
@@ -110,7 +74,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <p
         ref={ref}
-        className={cn("text-sm text-muted-foreground leading-relaxed", className)}
+        className={cn("text-sm text-muted-foreground", className)}
         {...props}
     />
 ))
@@ -120,11 +84,7 @@ const CardContent = React.forwardRef<
     HTMLDivElement,
     React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-    <div
-        ref={ref}
-        className={cn("pt-0", className)}
-        {...props}
-    />
+    <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
 ))
 CardContent.displayName = "CardContent"
 
@@ -137,7 +97,7 @@ const CardFooter = React.forwardRef<
     <div
         ref={ref}
         className={cn(
-            "flex items-center pt-6",
+            "flex items-center p-6 pt-0",
             centered ? "justify-center" : "justify-between",
             className
         )}
@@ -170,14 +130,14 @@ const StatsCard = React.forwardRef<
                         {title}
                     </p>
                     <div className="flex items-baseline space-x-2">
-                        <h3 className="text-3xl font-bold tracking-tight">
+                        <h3 className="text-2xl font-bold tracking-tight">
                             {value}
                         </h3>
                         {change && (
                             <span className={cn(
                                 "text-sm font-medium",
-                                changeType === 'positive' && "text-success",
-                                changeType === 'negative' && "text-destructive",
+                                changeType === 'positive' && "text-green-600 dark:text-green-500",
+                                changeType === 'negative' && "text-red-600 dark:text-red-500",
                                 changeType === 'neutral' && "text-muted-foreground"
                             )}>
                                 {change}
@@ -186,7 +146,7 @@ const StatsCard = React.forwardRef<
                     </div>
                 </div>
                 {icon && (
-                    <div className="text-muted-foreground">
+                    <div className="text-muted-foreground opacity-80">
                         {icon}
                     </div>
                 )}
@@ -205,26 +165,26 @@ const FeatureCard = React.forwardRef<
         href?: string
     }
 >(({ className, title, description, icon, href, ...props }, ref) => {
-    const Comp = href ? 'a' : 'div'
+    const CardComponent = href ? 'a' : 'div'
 
     return (
         <Card
             ref={ref}
             variant={href ? "interactive" : "elevated"}
-            className={cn("group", className)}
+            className={cn("group h-full", className)}
             {...props}
         >
             {href ? (
-                <a href={href} className="block">
-                    <CardContent>
-                        <div className="space-y-4">
+                <CardComponent href={href} className="block h-full">
+                    <CardContent className="p-6 flex flex-col h-full">
+                        <div className="space-y-4 flex-1">
                             {icon && (
-                                <div className="text-primary group-hover:scale-110 transition-transform duration-200">
+                                <div className="text-primary group-hover:scale-105 transition-transform duration-200 w-fit">
                                     {icon}
                                 </div>
                             )}
                             <div className="space-y-2">
-                                <h3 className="font-semibold group-hover:text-primary transition-colors">
+                                <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
                                     {title}
                                 </h3>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
@@ -233,17 +193,17 @@ const FeatureCard = React.forwardRef<
                             </div>
                         </div>
                     </CardContent>
-                </a>
+                </CardComponent>
             ) : (
-                <CardContent>
-                    <div className="space-y-4">
+                <CardContent className="p-6 flex flex-col h-full">
+                    <div className="space-y-4 flex-1">
                         {icon && (
-                            <div className="text-primary">
+                            <div className="text-primary w-fit">
                                 {icon}
                             </div>
                         )}
                         <div className="space-y-2">
-                            <h3 className="font-semibold">
+                            <h3 className="font-semibold text-lg">
                                 {title}
                             </h3>
                             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -269,14 +229,16 @@ const LoadingCard = React.forwardRef<
         className={cn("animate-pulse", className)}
         {...props}
     >
-        <CardContent>
+        <CardContent className="p-6">
             <div className="space-y-4">
-                <div className="h-4 bg-muted rounded w-1/3" />
+                <div className="h-4 bg-muted rounded w-1/4"></div>
                 {Array.from({ length: lines }).map((_, i) => (
                     <div
                         key={i}
-                        className="h-3 bg-muted rounded"
-                        style={{ width: `${Math.random() * 40 + 60}%` }}
+                        className={cn(
+                            "h-3 bg-muted rounded",
+                            i === lines - 1 ? "w-2/3" : "w-full"
+                        )}
                     />
                 ))}
             </div>
@@ -286,11 +248,6 @@ const LoadingCard = React.forwardRef<
 LoadingCard.displayName = "LoadingCard"
 
 export {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle, cardVariants, FeatureCard,
+    Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, cardVariants, FeatureCard,
     LoadingCard, StatsCard
 }
