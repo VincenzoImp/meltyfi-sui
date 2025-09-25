@@ -1,11 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  turbopack: {
-    root: '/Users/vincenzo/Documents/GitHub/meltyfi-sui',
-  },
+  // Remove turbopack for now as it may be causing issues
   experimental: {
-    // Ensure CSS is processed correctly
-    optimizeCss: true,
+    // Remove optimizeCss as it requires critters package
+    // optimizeCss: true,
   },
   webpack: (config, { isServer }) => {
     // Ensure proper CSS handling
@@ -19,6 +17,12 @@ const nextConfig = {
     }
     return config;
   },
+  // Add transpile packages if needed
+  transpilePackages: [
+    '@mysten/dapp-kit',
+    '@mysten/sui',
+    '@mysten/wallet-kit'
+  ],
 };
 
 module.exports = nextConfig;
