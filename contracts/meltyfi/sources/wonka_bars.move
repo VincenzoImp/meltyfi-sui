@@ -1,9 +1,6 @@
 /// WonkaBars - Lottery ticket NFTs for MeltyFi Protocol
-/// ERC-1155 equivalent implementation representing participation in lotteries
 module meltyfi::wonka_bars {
     use std::string::{Self, String};
-    use std::vector;
-    use sui::object::{Self, UID, ID};
     use sui::transfer;
     use sui::tx_context::{Self, TxContext};
     use sui::event;
@@ -14,7 +11,7 @@ module meltyfi::wonka_bars {
 
     /// WonkaBars NFT representing lottery participation
     public struct WonkaBars has key, store {
-        id: UID,
+        id: sui::object::UID,
         /// ID of the lottery this ticket belongs to
         lottery_id: u64,
         /// Number of tickets held
@@ -33,7 +30,7 @@ module meltyfi::wonka_bars {
     // ======== Events ========
 
     public struct WonkaBarsCreated has copy, drop {
-        id: ID,
+        id: sui::object::ID,
         lottery_id: u64,
         quantity: u64,
         owner: address,
@@ -75,11 +72,11 @@ module meltyfi::wonka_bars {
         ctx: &mut TxContext
     ): WonkaBars {
         let name = string::utf8(b"WonkaBar Lottery Ticket");
-        let description = create_description(lottery_id, quantity);
-        let image_url = create_image_url(lottery_id);
+        let description = create_description();
+        let image_url = create_image_url();
         
         let wonka_bars = WonkaBars {
-            id: object::new(ctx),
+            id: sui::object::new(ctx),
             lottery_id,
             quantity,
             owner,
@@ -89,7 +86,7 @@ module meltyfi::wonka_bars {
         };
 
         event::emit(WonkaBarsCreated {
-            id: object::id(&wonka_bars),
+            id: sui::object::id(&wonka_bars),
             lottery_id,
             quantity,
             owner,
@@ -116,7 +113,7 @@ module meltyfi::wonka_bars {
             owner,
         });
 
-        object::delete(id);
+        sui::object::delete(id);
     }
 
     /// Split WonkaBars into smaller quantities
@@ -152,7 +149,7 @@ module meltyfi::wonka_bars {
         } = other;
 
         wonka_bars.quantity = wonka_bars.quantity + quantity;
-        object::delete(id);
+        sui::object::delete(id);
     }
 
     // ======== View Functions ========
@@ -190,14 +187,13 @@ module meltyfi::wonka_bars {
     // ======== Internal Helper Functions ========
 
     /// Create description based on lottery details
-    fun create_description(lottery_id: u64, quantity: u64): String {
-        // Convert numbers to strings and create description
+    fun create_description(): String {
         string::utf8(b"MeltyFi WonkaBar lottery tickets - your golden ticket to win NFT collateral or get refunded with ChocoChip rewards!")
     }
 
     /// Create image URL based on lottery ID
-    fun create_image_url(lottery_id: u64): String {
-        string::utf8(b"https://ipfs.io/ipfs/QmWonkaBarImage") // Replace with dynamic generation
+    fun create_image_url(): String {
+        string::utf8(b"https://ipfs.io/ipfs/QmWonkaBarImage")
     }
 
     // ======== Test Functions ========
