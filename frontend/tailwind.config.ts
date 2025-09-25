@@ -74,6 +74,24 @@ const config: Config = {
         },
     },
     plugins: [require('tailwindcss-animate')],
+    // Ensure all utility classes are generated
+    safelist: [
+        'border-border',
+        'bg-background',
+        'text-foreground',
+        'bg-card',
+        'text-card-foreground',
+        'bg-primary',
+        'text-primary-foreground',
+        'bg-secondary',
+        'text-secondary-foreground',
+        'bg-muted',
+        'text-muted-foreground',
+        'bg-accent',
+        'text-accent-foreground',
+        'bg-destructive',
+        'text-destructive-foreground',
+    ]
 }
 
 export default config
