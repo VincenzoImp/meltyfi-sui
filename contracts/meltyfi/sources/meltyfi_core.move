@@ -169,7 +169,8 @@ module meltyfi::meltyfi_core {
             lottery_id,
         };
 
-        let lottery = Lottery {
+        // FIXED: Changed from 'let lottery' to 'let mut lottery'
+        let mut lottery = Lottery {
             id: lottery_uid,
             lottery_id,
             owner: tx_context::sender(ctx),
@@ -183,6 +184,7 @@ module meltyfi::meltyfi_core {
             participants: table::new(ctx),
         };
 
+        // Now this works because lottery is mutable
         dof::add(&mut lottery.id, b"collateral", collateral);
         vector::push_back(&mut protocol.active_lotteries, lottery_id_obj);
         transfer::share_object(lottery);
