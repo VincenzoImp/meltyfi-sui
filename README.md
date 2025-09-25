@@ -33,7 +33,7 @@ npm run dev:frontend
 
 ```
 meltyfi-sui-migration/
-├── contracts/meltyfi_protocol/     # Move smart contracts
+├── contracts/meltyfi/     # Move smart contracts
 │   ├── sources/                    # Contract source code
 │   ├── tests/                      # Contract tests
 │   └── Move.toml                   # Move package configuration
