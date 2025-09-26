@@ -102,10 +102,10 @@ export function Navigation() {
         <>
             {/* Main Navigation */}
             <nav className={cn(
-                "sticky top-0 z-50 w-full transition-all duration-200 border-b",
+                "sticky top-0 z-50 w-full transition-all duration-200",
                 isScrolled
-                    ? "bg-background/80 backdrop-blur-md border-border"
-                    : "bg-background/60 backdrop-blur-sm border-border/60"
+                    ? "bg-gray-900/80 backdrop-blur-md border-b border-white/10"
+                    : "bg-gray-900/60 backdrop-blur-sm border-b border-white/5"
             )}>
                 <div className="container mx-auto px-6">
                     <div className="flex items-center justify-between h-16">
@@ -126,10 +126,10 @@ export function Navigation() {
                                     key={item.href}
                                     href={item.href}
                                     className={cn(
-                                        "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                                        "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
                                         pathname === item.href
-                                            ? "bg-primary text-primary-foreground"
-                                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                            ? "bg-purple-600 text-white shadow-md"
+                                            : "text-white/70 hover:bg-white/10 hover:text-white"
                                     )}
                                 >
                                     {item.icon}
@@ -139,19 +139,19 @@ export function Navigation() {
 
                             {/* External Links Dropdown */}
                             <div className="relative group">
-                                <button className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                                <button className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200">
                                     <span>More</span>
                                     <ChevronDown className="h-3 w-3" />
                                 </button>
                                 <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                                    <div className="rounded-lg border bg-background p-2 shadow-lg">
+                                    <div className="rounded-lg border border-white/10 bg-gray-900 backdrop-blur-sm p-2 shadow-xl">
                                         {externalLinks.map((item) => (
                                             <Link
                                                 key={item.href}
                                                 href={item.href}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                                className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200"
                                             >
                                                 {item.icon}
                                                 <span>{item.label}</span>
@@ -166,31 +166,33 @@ export function Navigation() {
                         <div className="hidden md:flex items-center space-x-4">
                             <button
                                 onClick={toggleTheme}
-                                className="w-9 h-9 p-0 rounded-md hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-colors"
+                                className="w-9 h-9 p-0 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
                             >
                                 {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                             </button>
 
                             {isConnected ? (
-                                <div className="flex items-center space-x-2">
-                                    <div className="text-right">
-                                        <div className="text-sm font-semibold">{userBalance} SUI</div>
-                                        <div className="text-xs text-muted-foreground">Connected</div>
+                                <div className="flex items-center space-x-3">
+                                    <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-2">
+                                        <div className="text-right">
+                                            <div className="text-sm font-semibold text-white">{userBalance} SUI</div>
+                                            <div className="text-xs text-white/60">Connected</div>
+                                        </div>
                                     </div>
                                     <button
                                         onClick={disconnectWallet}
-                                        className="relative group border rounded-md px-3 py-1 text-sm hover:bg-accent transition-colors"
+                                        className="relative group border border-white/10 rounded-md px-3 py-2 text-sm hover:bg-white/10 transition-all duration-200"
                                     >
                                         <div className="w-2 h-2 rounded-full bg-green-500 absolute -top-1 -right-1"></div>
-                                        <Wallet className="h-4 w-4" />
+                                        <Wallet className="h-4 w-4 text-white" />
                                     </button>
                                 </div>
                             ) : (
                                 <button
                                     onClick={connectWallet}
-                                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center"
                                 >
-                                    <Wallet className="h-4 w-4 mr-2 inline" />
+                                    <Wallet className="h-4 w-4 mr-2" />
                                     Connect Wallet
                                 </button>
                             )}
@@ -200,7 +202,7 @@ export function Navigation() {
                         <div className="md:hidden">
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
-                                className="w-9 h-9 p-0 rounded-md hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-colors"
+                                className="w-9 h-9 p-0 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
                             >
                                 {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
                             </button>
@@ -213,26 +215,26 @@ export function Navigation() {
             {isOpen && (
                 <>
                     <div
-                        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden"
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
                         onClick={() => setIsOpen(false)}
                     />
                     <div className="fixed top-[65px] right-6 w-80 z-50 md:hidden">
-                        <div className="rounded-lg border bg-background p-6 shadow-xl">
+                        <div className="rounded-lg border border-white/10 bg-gray-900 backdrop-blur-sm p-6 shadow-xl">
                             <div className="space-y-4">
                                 {/* Mobile Wallet Section */}
-                                <div className="pb-4 border-b border-border">
+                                <div className="pb-4 border-b border-white/10">
                                     {isConnected ? (
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <div>
-                                                    <div className="font-semibold">{userBalance} SUI</div>
-                                                    <div className="text-sm text-muted-foreground">Connected</div>
+                                                    <div className="font-semibold text-white">{userBalance} SUI</div>
+                                                    <div className="text-sm text-white/60">Connected</div>
                                                 </div>
                                                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
                                             </div>
                                             <button
                                                 onClick={disconnectWallet}
-                                                className="w-full border rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                                                className="w-full border border-white/10 rounded-md px-3 py-2 text-sm hover:bg-white/10 transition-all duration-200 text-white"
                                             >
                                                 Disconnect Wallet
                                             </button>
@@ -240,9 +242,9 @@ export function Navigation() {
                                     ) : (
                                         <button
                                             onClick={connectWallet}
-                                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center"
                                         >
-                                            <Wallet className="h-4 w-4 mr-2 inline" />
+                                            <Wallet className="h-4 w-4 mr-2" />
                                             Connect Sui Wallet
                                         </button>
                                     )}
@@ -254,10 +256,10 @@ export function Navigation() {
                                         key={item.href}
                                         href={item.href}
                                         className={cn(
-                                            "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                                            "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
                                             pathname === item.href
-                                                ? "bg-primary text-primary-foreground"
-                                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                                ? "bg-purple-600 text-white"
+                                                : "text-white/70 hover:bg-white/10 hover:text-white"
                                         )}
                                     >
                                         {item.icon}
@@ -266,14 +268,14 @@ export function Navigation() {
                                 ))}
 
                                 {/* Mobile External Links */}
-                                <div className="pt-4 border-t border-border space-y-2">
+                                <div className="pt-4 border-t border-white/10 space-y-2">
                                     {externalLinks.map((item) => (
                                         <Link
                                             key={item.href}
                                             href={item.href}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                            className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200"
                                         >
                                             {item.icon}
                                             <span>{item.label}</span>
@@ -282,10 +284,10 @@ export function Navigation() {
                                 </div>
 
                                 {/* Mobile Theme Toggle */}
-                                <div className="pt-4 border-t border-border">
+                                <div className="pt-4 border-t border-white/10">
                                     <button
                                         onClick={toggleTheme}
-                                        className="w-full justify-start border rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors flex items-center"
+                                        className="w-full justify-start border border-white/10 rounded-md px-3 py-2 text-sm hover:bg-white/10 transition-all duration-200 flex items-center text-white"
                                     >
                                         {theme === 'dark' ? (
                                             <>
