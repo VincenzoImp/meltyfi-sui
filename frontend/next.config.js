@@ -1,26 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configure Turbopack root to silence workspace warnings
+  // Configure Turbopack properly for Next.js 15
   turbopack: {
     root: __dirname,
   },
 
-  // Remove experimental features causing warnings
-  experimental: {
-    // Remove optimizeCss and other experimental features for now
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
-  },
-
   // Webpack configuration for fallbacks
-  webpack: (config, { isServer, dev }) => {
-    // Ensure proper CSS handling
+  webpack: (config, { isServer }) => {
+    // Ensure proper fallbacks for browser environment
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -40,7 +27,7 @@ const nextConfig = {
     return config;
   },
 
-  // Add transpile packages for better compatibility
+  // Transpile packages for better compatibility
   transpilePackages: [
     '@mysten/dapp-kit',
     '@mysten/sui',
@@ -53,9 +40,6 @@ const nextConfig = {
     domains: ['images.unsplash.com', 'ipfs.io'],
     formats: ['image/webp', 'image/avif'],
   },
-
-  // Enable SWC minification
-  swcMinify: true,
 
   // Optimize build output
   compiler: {
@@ -83,6 +67,11 @@ const nextConfig = {
         ],
       },
     ];
+  },
+
+  // Environment variables
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
 };
 
