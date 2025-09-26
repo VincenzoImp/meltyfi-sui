@@ -47,30 +47,6 @@ const stats = [
   { label: "Happy Users", value: "3.2K", change: "+156", icon: <Users className="w-6 h-6 text-blue-400" /> }
 ]
 
-const testimonials = [
-  {
-    name: "Alex Chen",
-    role: "NFT Collector",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-    content: "MeltyFi saved my portfolio! I needed quick liquidity but didn't want to sell my prized NFTs. Created a lottery, got funded instantly, and repaid to keep my collection intact.",
-    rating: 5
-  },
-  {
-    name: "Sarah Kim",
-    role: "DeFi Lender",
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b332c32e?w=100&h=100&fit=crop&crop=face",
-    content: "Love the gamified lending experience! Even when I don't win the NFT, the ChocoChip rewards make it worthwhile. Plus supporting fellow collectors feels great.",
-    rating: 5
-  },
-  {
-    name: "Marcus Rodriguez",
-    role: "Crypto Trader",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-    content: "The mechanics are brilliant. Fair chances, instant settlements on Sui, and the community aspect makes this more engaging than traditional lending protocols.",
-    rating: 5
-  }
-]
-
 const howItWorksSteps = [
   {
     step: 1,

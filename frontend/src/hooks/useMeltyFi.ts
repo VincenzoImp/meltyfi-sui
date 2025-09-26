@@ -29,7 +29,7 @@ interface LotteryData {
     wonkabarPrice: number;
     maxSupply: number;
     soldCount: number;
-    winner?: string;
+    winner?: string; // Optional property
 }
 
 interface WonkaBarsData {
@@ -211,7 +211,7 @@ export function useMeltyFi() {
                 });
 
                 return response
-                    .map((item, index) => {
+                    .map((item) => {
                         if (item.data?.content && 'fields' in item.data.content) {
                             const fields = item.data.content.fields as any;
                             return {
@@ -224,13 +224,11 @@ export function useMeltyFi() {
                                 maxSupply: parseInt(fields.max_supply || '0'),
                                 soldCount: parseInt(fields.sold_count || '0'),
                                 winner: fields.winner,
-                            };
+                            } as LotteryData;
                         }
                         return null;
                     })
-                    .filter(
-                        (lottery): lottery is LotteryData => lottery !== null
-                    ) as LotteryData[];
+                    .filter((lottery): lottery is LotteryData => lottery !== null);
             } catch (error) {
                 console.error('Error fetching lotteries:', error);
                 return [];
@@ -257,18 +255,20 @@ export function useMeltyFi() {
                     }
                 });
 
-                return response.data.map(item => {
-                    if (item.data?.content && 'fields' in item.data.content) {
-                        const fields = item.data.content.fields as any;
-                        return {
-                            id: item.data.objectId,
-                            lottery_id: parseInt(fields.lottery_id || '0'),
-                            quantity: parseInt(fields.quantity || '0'),
-                            owner: fields.owner || '',
-                        };
-                    }
-                    return null;
-                }).filter((wonkaBars): wonkaBars is WonkaBarsData => wonkaBars !== null);
+                return response.data
+                    .map(item => {
+                        if (item.data?.content && 'fields' in item.data.content) {
+                            const fields = item.data.content.fields as any;
+                            return {
+                                id: item.data.objectId,
+                                lottery_id: parseInt(fields.lottery_id || '0'),
+                                quantity: parseInt(fields.quantity || '0'),
+                                owner: fields.owner || '',
+                            } as WonkaBarsData;
+                        }
+                        return null;
+                    })
+                    .filter((wonkaBars): wonkaBars is WonkaBarsData => wonkaBars !== null);
             } catch (error) {
                 console.error('Error fetching user WonkaBars:', error);
                 return [];
