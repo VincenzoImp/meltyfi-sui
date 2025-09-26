@@ -9,13 +9,11 @@ import {
   Gift,
   Shield,
   Sparkles,
-  Star,
   TrendingUp,
   Trophy,
   Users,
   Zap
 } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
@@ -209,22 +207,6 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {howItWorksSteps.map((step, index) => (
             <div key={index} className="group">
-              {/* Step Image */}
-              <div className="relative aspect-video rounded-lg overflow-hidden mb-6 border border-white/10">
-                <Image
-                  src={step.image}
-                  alt={step.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className={cn(
-                  "absolute top-4 left-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-gradient-to-br",
-                  step.color
-                )}>
-                  <span className="text-xl font-bold text-white">{step.step}</span>
-                </div>
-              </div>
-
               {/* Step Content */}
               <div className="text-center">
                 <div className="flex justify-center mb-4">
@@ -239,50 +221,6 @@ export default function HomePage() {
                 <p className="text-white/80 leading-relaxed">
                   {step.description}
                 </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="relative z-10 container mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-            Sweet Success Stories
-          </h2>
-          <p className="text-xl text-white/80 max-w-3xl mx-auto">
-            Hear from our community about their MeltyFi experiences
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <div key={index} className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 p-8">
-              {/* Rating Stars */}
-              <div className="flex items-center mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-amber-400 fill-current" />
-                ))}
-              </div>
-
-              {/* Testimonial Content */}
-              <p className="text-white/80 leading-relaxed mb-6 italic">"{testimonial.content}"</p>
-
-              {/* Author */}
-              <div className="flex items-center border-t border-white/10 pt-4">
-                <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
-                  <Image
-                    src={testimonial.avatar}
-                    alt={testimonial.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div>
-                  <div className="font-semibold text-white">{testimonial.name}</div>
-                  <div className="text-sm text-white/60">{testimonial.role}</div>
-                </div>
               </div>
             </div>
           ))}
