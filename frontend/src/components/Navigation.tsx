@@ -7,15 +7,12 @@ import {
     Github,
     Home,
     Menu,
-    Moon,
     Sparkles,
-    Sun,
     Trophy,
     User,
     Wallet,
     X
 } from "lucide-react"
-import { useTheme } from "next-themes"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import * as React from "react"
@@ -66,14 +63,7 @@ export function Navigation() {
     const [isScrolled, setIsScrolled] = useState(false)
     const [isConnected, setIsConnected] = useState(false)
     const [userBalance, setUserBalance] = useState("0.000")
-    const { theme, setTheme } = useTheme()
-    const [mounted, setMounted] = useState(false)
     const pathname = usePathname()
-
-    // Handle hydration
-    useEffect(() => {
-        setMounted(true)
-    }, [])
 
     // Handle scroll effect
     useEffect(() => {
@@ -89,10 +79,6 @@ export function Navigation() {
         setIsOpen(false)
     }, [pathname])
 
-    const toggleTheme = () => {
-        setTheme(theme === 'dark' ? 'light' : 'dark')
-    }
-
     const connectWallet = () => {
         // Mock wallet connection
         setIsConnected(true)
@@ -104,22 +90,14 @@ export function Navigation() {
         setUserBalance("0.000")
     }
 
-    // Render theme icon only after mount to avoid hydration mismatch
-    const renderThemeIcon = () => {
-        if (!mounted) {
-            return <div className="h-4 w-4" /> // Placeholder to maintain layout
-        }
-        return theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />
-    }
-
     return (
         <>
             {/* Main Navigation */}
             <nav className={cn(
                 "sticky top-0 z-50 w-full transition-all duration-200",
                 isScrolled
-                    ? "bg-gray-900/80 backdrop-blur-md border-b border-white/10"
-                    : "bg-gray-900/60 backdrop-blur-sm border-b border-white/5"
+                    ? "bg-gray-900/95 backdrop-blur-lg border-b border-white/10"
+                    : "bg-gray-900/80 backdrop-blur-sm border-b border-white/5"
             )}>
                 <div className="container mx-auto px-6">
                     <div className="flex items-center justify-between h-16">
@@ -142,7 +120,7 @@ export function Navigation() {
                                     className={cn(
                                         "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
                                         pathname === item.href
-                                            ? "bg-purple-600 text-white shadow-md"
+                                            ? "bg-purple-600/90 text-white shadow-md"
                                             : "text-white/70 hover:bg-white/10 hover:text-white"
                                     )}
                                 >
@@ -158,7 +136,7 @@ export function Navigation() {
                                     <ChevronDown className="h-3 w-3" />
                                 </button>
                                 <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                                    <div className="rounded-lg border border-white/10 bg-gray-900 backdrop-blur-sm p-2 shadow-xl">
+                                    <div className="rounded-lg border border-white/10 bg-gray-900/95 backdrop-blur-lg p-2 shadow-xl">
                                         {externalLinks.map((item) => (
                                             <Link
                                                 key={item.href}
@@ -178,14 +156,6 @@ export function Navigation() {
 
                         {/* Desktop Actions */}
                         <div className="hidden md:flex items-center space-x-4">
-                            <button
-                                onClick={toggleTheme}
-                                className="w-9 h-9 p-0 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
-                                suppressHydrationWarning
-                            >
-                                {renderThemeIcon()}
-                            </button>
-
                             {isConnected ? (
                                 <div className="flex items-center space-x-3">
                                     <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-2">
@@ -205,7 +175,7 @@ export function Navigation() {
                             ) : (
                                 <button
                                     onClick={connectWallet}
-                                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center"
+                                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center shadow-lg hover:shadow-xl"
                                 >
                                     <Wallet className="h-4 w-4 mr-2" />
                                     Connect Wallet
@@ -234,7 +204,7 @@ export function Navigation() {
                         onClick={() => setIsOpen(false)}
                     />
                     <div className="fixed top-[65px] right-6 w-80 z-50 md:hidden">
-                        <div className="rounded-lg border border-white/10 bg-gray-900 backdrop-blur-sm p-6 shadow-xl">
+                        <div className="rounded-lg border border-white/10 bg-gray-900/95 backdrop-blur-lg p-6 shadow-xl">
                             <div className="space-y-4">
                                 {/* Mobile Wallet Section */}
                                 <div className="pb-4 border-b border-white/10">
@@ -257,7 +227,7 @@ export function Navigation() {
                                     ) : (
                                         <button
                                             onClick={connectWallet}
-                                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center"
+                                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center shadow-lg"
                                         >
                                             <Wallet className="h-4 w-4 mr-2" />
                                             Connect Sui Wallet
@@ -273,7 +243,7 @@ export function Navigation() {
                                         className={cn(
                                             "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
                                             pathname === item.href
-                                                ? "bg-purple-600 text-white"
+                                                ? "bg-purple-600/90 text-white"
                                                 : "text-white/70 hover:bg-white/10 hover:text-white"
                                         )}
                                     >
@@ -296,37 +266,6 @@ export function Navigation() {
                                             <span>{item.label}</span>
                                         </Link>
                                     ))}
-                                </div>
-
-                                {/* Mobile Theme Toggle */}
-                                <div className="pt-4 border-t border-white/10">
-                                    <button
-                                        onClick={toggleTheme}
-                                        className="w-full justify-start border border-white/10 rounded-md px-3 py-2 text-sm hover:bg-white/10 transition-all duration-200 flex items-center text-white"
-                                        suppressHydrationWarning
-                                    >
-                                        {mounted && (
-                                            <>
-                                                {theme === 'dark' ? (
-                                                    <>
-                                                        <Sun className="h-4 w-4 mr-2" />
-                                                        Light Mode
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Moon className="h-4 w-4 mr-2" />
-                                                        Dark Mode
-                                                    </>
-                                                )}
-                                            </>
-                                        )}
-                                        {!mounted && (
-                                            <>
-                                                <div className="h-4 w-4 mr-2" />
-                                                Theme
-                                            </>
-                                        )}
-                                    </button>
                                 </div>
                             </div>
                         </div>
