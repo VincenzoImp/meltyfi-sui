@@ -12,4 +12,4 @@ meltyfi = "0x0"
 [dev-dependencies]
 
 [dev-addresses]
-meltyfi = "0x0"
+# Remove the duplicate address assignment - this was causing the build error

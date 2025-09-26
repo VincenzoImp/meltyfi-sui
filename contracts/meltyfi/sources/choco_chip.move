@@ -45,6 +45,7 @@ module meltyfi::choco_chip {
 
     // ======== Initialization ========
 
+    #[allow(deprecated_usage)]
     fun init(witness: CHOCO_CHIP, ctx: &mut TxContext) {
         let (treasury_cap, metadata) = coin::create_currency(
             witness, 
@@ -96,7 +97,11 @@ module meltyfi::choco_chip {
             reason: b"lottery_reward",
         });
 
-        minted_coin
+        // Transfer the minted coin to the recipient
+        transfer::public_transfer(minted_coin, recipient);
+        
+        // Return a zero coin for consistency with the interface
+        coin::zero(ctx)
     }
 
     public fun authorize_minter(

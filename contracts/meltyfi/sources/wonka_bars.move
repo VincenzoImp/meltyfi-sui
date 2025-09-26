@@ -185,7 +185,6 @@ module meltyfi::wonka_bars {
             image_url: _,
         } = other;
 
-        let old_quantity = wonka_bars.quantity;
         wonka_bars.quantity = wonka_bars.quantity + quantity;
         
         // Update the name to reflect new quantity
@@ -236,7 +235,8 @@ module meltyfi::wonka_bars {
     // ======== Internal Helper Functions ========
 
     /// Create name based on lottery ID and quantity
-    fun create_name(lottery_id: u64, quantity: u64): String {
+    #[allow(unused_variable)]
+    fun create_name(_lottery_id: u64, quantity: u64): String {
         if (quantity == 1) {
             string::utf8(b"WonkaBar Lottery Ticket")
         } else {
@@ -245,12 +245,14 @@ module meltyfi::wonka_bars {
     }
 
     /// Create description based on lottery details
-    fun create_description(lottery_id: u64): String {
+    #[allow(unused_variable)]
+    fun create_description(_lottery_id: u64): String {
         string::utf8(b"MeltyFi WonkaBar lottery tickets - your golden ticket to win NFT collateral or get refunded with ChocoChip rewards!")
     }
 
     /// Create image URL based on lottery ID
-    fun create_image_url(lottery_id: u64): String {
+    #[allow(unused_variable)]
+    fun create_image_url(_lottery_id: u64): String {
         string::utf8(b"https://ipfs.io/ipfs/QmWonkaBarImage")
     }
 

@@ -29,7 +29,6 @@ module meltyfi::meltyfi_core {
     const EMaxSupplyReached: u64 = 8;
     const EBalanceExceedsLimit: u64 = 10;
     const ENotAuthorized: u64 = 11;
-    const EInvalidWinner: u64 = 12;
 
     // ======== Constants ========
     
@@ -273,6 +272,7 @@ module meltyfi::meltyfi_core {
     }
 
     /// Draw winner for lottery using proper randomness
+    #[allow(lint(public_random))]
     public fun draw_winner(
         lottery: &mut Lottery,
         random: &Random,
@@ -309,7 +309,8 @@ module meltyfi::meltyfi_core {
     }
 
     /// Helper function to find winner by ticket number
-    fun find_winner_by_ticket(lottery: &Lottery, winning_ticket: u64): address {
+    #[allow(unused_variable)]
+    fun find_winner_by_ticket(_lottery: &Lottery, _winning_ticket: u64): address {
         // For now, return a dummy address - this should be implemented with proper ticket tracking
         // In a full implementation, we'd need to track ticket ranges per participant
         @0x1 // Placeholder - needs proper implementation
@@ -329,7 +330,8 @@ module meltyfi::meltyfi_core {
         assert!(lottery.state != LOTTERY_ACTIVE, EInvalidLotteryState);
 
         let choco_reward_amount = quantity * CHOCOCHIPS_PER_SUI;
-        let choco_chips = choco_chip::mint(factory, choco_reward_amount, ctx);
+        // Fix: Correct parameter order for choco_chip::mint
+        let choco_chips = choco_chip::mint(factory, choco_reward_amount, redeemer, ctx);
 
         let (nft_option, sui_payout) = if (lottery.state == LOTTERY_CANCELLED) {
             // Refund case

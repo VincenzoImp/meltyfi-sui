@@ -67,7 +67,13 @@ export function Navigation() {
     const [isConnected, setIsConnected] = useState(false)
     const [userBalance, setUserBalance] = useState("0.000")
     const { theme, setTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
     const pathname = usePathname()
+
+    // Handle hydration
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     // Handle scroll effect
     useEffect(() => {
@@ -96,6 +102,14 @@ export function Navigation() {
     const disconnectWallet = () => {
         setIsConnected(false)
         setUserBalance("0.000")
+    }
+
+    // Render theme icon only after mount to avoid hydration mismatch
+    const renderThemeIcon = () => {
+        if (!mounted) {
+            return <div className="h-4 w-4" /> // Placeholder to maintain layout
+        }
+        return theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />
     }
 
     return (
@@ -167,8 +181,9 @@ export function Navigation() {
                             <button
                                 onClick={toggleTheme}
                                 className="w-9 h-9 p-0 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
+                                suppressHydrationWarning
                             >
-                                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                                {renderThemeIcon()}
                             </button>
 
                             {isConnected ? (
@@ -288,16 +303,27 @@ export function Navigation() {
                                     <button
                                         onClick={toggleTheme}
                                         className="w-full justify-start border border-white/10 rounded-md px-3 py-2 text-sm hover:bg-white/10 transition-all duration-200 flex items-center text-white"
+                                        suppressHydrationWarning
                                     >
-                                        {theme === 'dark' ? (
+                                        {mounted && (
                                             <>
-                                                <Sun className="h-4 w-4 mr-2" />
-                                                Light Mode
+                                                {theme === 'dark' ? (
+                                                    <>
+                                                        <Sun className="h-4 w-4 mr-2" />
+                                                        Light Mode
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Moon className="h-4 w-4 mr-2" />
+                                                        Dark Mode
+                                                    </>
+                                                )}
                                             </>
-                                        ) : (
+                                        )}
+                                        {!mounted && (
                                             <>
-                                                <Moon className="h-4 w-4 mr-2" />
-                                                Dark Mode
+                                                <div className="h-4 w-4 mr-2" />
+                                                Theme
                                             </>
                                         )}
                                     </button>
