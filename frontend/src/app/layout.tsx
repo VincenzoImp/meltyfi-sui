@@ -27,10 +27,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="en">
+      <body className={`${inter.className} bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 min-h-screen`}>
         <Providers>
-          <div className="min-h-screen bg-background flex flex-col">
+          <div className="min-h-screen flex flex-col">
             <Navigation />
             <main className="flex-1">
               {children}
