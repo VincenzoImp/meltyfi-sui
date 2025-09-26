@@ -1,13 +1,14 @@
 'use client'
 
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import {
+    ChevronDown,
+    ExternalLink,
     Github,
     Home,
     Menu,
     Moon,
+    Sparkles,
     Sun,
     Trophy,
     User,
@@ -18,6 +19,7 @@ import { useTheme } from "next-themes"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import * as React from "react"
+import { useEffect, useState } from "react"
 
 interface NavItem {
     href: string
@@ -41,27 +43,34 @@ const navigationItems: NavItem[] = [
         href: "/profile",
         label: "Profile",
         icon: <User className="h-4 w-4" />
-    },
+    }
+]
+
+const externalLinks: NavItem[] = [
     {
         href: "https://github.com/VincenzoImp/MeltyFi",
         label: "GitHub",
         icon: <Github className="h-4 w-4" />,
         external: true
+    },
+    {
+        href: "https://docs.meltyfi.com",
+        label: "Docs",
+        icon: <ExternalLink className="h-4 w-4" />,
+        external: true
     }
 ]
 
-interface NavigationProps {
-    className?: string
-}
-
-export function Navigation({ className }: NavigationProps) {
-    const [isOpen, setIsOpen] = React.useState(false)
-    const [isScrolled, setIsScrolled] = React.useState(false)
+export function Navigation() {
+    const [isOpen, setIsOpen] = useState(false)
+    const [isScrolled, setIsScrolled] = useState(false)
+    const [isConnected, setIsConnected] = useState(false)
+    const [userBalance, setUserBalance] = useState("0.000")
     const { theme, setTheme } = useTheme()
     const pathname = usePathname()
 
     // Handle scroll effect
-    React.useEffect(() => {
+    useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20)
         }
@@ -70,7 +79,7 @@ export function Navigation({ className }: NavigationProps) {
     }, [])
 
     // Close mobile menu on route change
-    React.useEffect(() => {
+    useEffect(() => {
         setIsOpen(false)
     }, [pathname])
 
@@ -78,270 +87,224 @@ export function Navigation({ className }: NavigationProps) {
         setTheme(theme === 'dark' ? 'light' : 'dark')
     }
 
+    const connectWallet = () => {
+        // Mock wallet connection
+        setIsConnected(true)
+        setUserBalance("12.453")
+    }
+
+    const disconnectWallet = () => {
+        setIsConnected(false)
+        setUserBalance("0.000")
+    }
+
     return (
         <>
             {/* Main Navigation */}
             <nav className={cn(
-                "sticky top-0 z-50 w-full transition-all duration-200",
+                "sticky top-0 z-50 w-full transition-all duration-200 border-b",
                 isScrolled
-                    ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40"
-                    : "bg-transparent",
-                className
+                    ? "bg-background/80 backdrop-blur-md border-border"
+                    : "bg-background/60 backdrop-blur-sm border-border/60"
             )}>
-                <div className="container mx-auto px-4">
+                <div className="container mx-auto px-6">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
-                        <Link
-                            href="/"
-                            className="flex items-center space-x-2 group"
-                        >
-                            <div className="relative">
-                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 shadow-lg group-hover:shadow-xl transition-shadow duration-200" />
-                                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary to-purple-600 opacity-0 group-hover:opacity-20 blur-md transition-opacity duration-200" />
+                        <Link href="/" className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                                <Sparkles className="w-5 h-5 text-white" />
                             </div>
-                            <span className="font-bold text-xl bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                            <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
                                 MeltyFi
                             </span>
                         </Link>
 
                         {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center space-x-1">
-                            {navigationItems.map((item) => {
-                                const isActive = pathname === item.href
-                                const isExternal = item.external
-
-                                if (isExternal) {
-                                    return (
-                                        <a
-                                            key={item.href}
-                                            href={item.href}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className={cn(
-                                                "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                                                "hover:bg-accent hover:text-accent-foreground",
-                                                "text-muted-foreground"
-                                            )}
-                                        >
-                                            {item.icon}
-                                            <span>{item.label}</span>
-                                        </a>
-                                    )
-                                }
-
-                                return (
-                                    <Link
-                                        key={item.href}
-                                        href={item.href}
-                                        className={cn(
-                                            "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                                            isActive
-                                                ? "bg-primary text-primary-foreground shadow-sm"
-                                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                                        )}
-                                    >
-                                        {item.icon}
-                                        <span>{item.label}</span>
-                                    </Link>
-                                )
-                            })}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center space-x-2">
-                            {/* Theme Toggle */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={toggleTheme}
-                            >
-                                {theme === 'dark' ? (
-                                    <Sun className="h-4 w-4" />
-                                ) : (
-                                    <Moon className="h-4 w-4" />
-                                )}
-                                <span className="sr-only">Toggle theme</span>
-                            </Button>
-
-                            {/* Wallet Connection - Placeholder */}
-                            <Button variant="outline" size="sm" className="hidden sm:flex">
-                                <Wallet className="h-4 w-4 mr-2" />
-                                Connect Wallet
-                            </Button>
-
-                            {/* Mobile Menu Toggle */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="md:hidden"
-                                onClick={() => setIsOpen(!isOpen)}
-                            >
-                                {isOpen ? (
-                                    <X className="h-4 w-4" />
-                                ) : (
-                                    <Menu className="h-4 w-4" />
-                                )}
-                                <span className="sr-only">
-                                    {isOpen ? 'Close menu' : 'Open menu'}
-                                </span>
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            {/* Mobile Menu Overlay */}
-            {isOpen && (
-                <div className="fixed inset-0 z-40 md:hidden">
-                    <div
-                        className="fixed inset-0 bg-background/80 backdrop-blur-sm"
-                        onClick={() => setIsOpen(false)}
-                    />
-                </div>
-            )}
-
-            {/* Mobile Menu */}
-            <div className={cn(
-                "fixed top-16 left-0 right-0 z-50 md:hidden transition-all duration-200 ease-in-out",
-                isOpen
-                    ? "translate-y-0 opacity-100"
-                    : "-translate-y-full opacity-0 pointer-events-none"
-            )}>
-                <Card className="m-4 shadow-xl">
-                    <div className="p-4 space-y-2">
-                        {navigationItems.map((item) => {
-                            const isActive = pathname === item.href
-                            const isExternal = item.external
-
-                            if (isExternal) {
-                                return (
-                                    <a
-                                        key={item.href}
-                                        href={item.href}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className={cn(
-                                            "flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
-                                            "hover:bg-accent hover:text-accent-foreground",
-                                            "text-muted-foreground"
-                                        )}
-                                    >
-                                        {item.icon}
-                                        <span>{item.label}</span>
-                                    </a>
-                                )
-                            }
-
-                            return (
+                        <div className="hidden md:flex items-center space-x-8">
+                            {navigationItems.map((item) => (
                                 <Link
                                     key={item.href}
                                     href={item.href}
                                     className={cn(
-                                        "flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
-                                        isActive
-                                            ? "bg-primary text-primary-foreground shadow-sm"
+                                        "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                                        pathname === item.href
+                                            ? "bg-primary text-primary-foreground"
                                             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                     )}
                                 >
                                     {item.icon}
                                     <span>{item.label}</span>
                                 </Link>
-                            )
-                        })}
+                            ))}
 
-                        {/* Mobile Wallet Button */}
-                        <div className="pt-4 border-t border-border">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full justify-start"
+                            {/* External Links Dropdown */}
+                            <div className="relative group">
+                                <button className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                                    <span>More</span>
+                                    <ChevronDown className="h-3 w-3" />
+                                </button>
+                                <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                                    <div className="rounded-lg border bg-background p-2 shadow-lg">
+                                        {externalLinks.map((item) => (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                            >
+                                                {item.icon}
+                                                <span>{item.label}</span>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Desktop Actions */}
+                        <div className="hidden md:flex items-center space-x-4">
+                            <button
+                                onClick={toggleTheme}
+                                className="w-9 h-9 p-0 rounded-md hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-colors"
                             >
-                                <Wallet className="h-4 w-4 mr-2" />
-                                Connect Wallet
-                            </Button>
+                                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                            </button>
+
+                            {isConnected ? (
+                                <div className="flex items-center space-x-2">
+                                    <div className="text-right">
+                                        <div className="text-sm font-semibold">{userBalance} SUI</div>
+                                        <div className="text-xs text-muted-foreground">Connected</div>
+                                    </div>
+                                    <button
+                                        onClick={disconnectWallet}
+                                        className="relative group border rounded-md px-3 py-1 text-sm hover:bg-accent transition-colors"
+                                    >
+                                        <div className="w-2 h-2 rounded-full bg-green-500 absolute -top-1 -right-1"></div>
+                                        <Wallet className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={connectWallet}
+                                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                                >
+                                    <Wallet className="h-4 w-4 mr-2 inline" />
+                                    Connect Wallet
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Mobile Menu Button */}
+                        <div className="md:hidden">
+                            <button
+                                onClick={() => setIsOpen(!isOpen)}
+                                className="w-9 h-9 p-0 rounded-md hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-colors"
+                            >
+                                {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                            </button>
                         </div>
                     </div>
-                </Card>
-            </div>
-        </>
-    )
-}
-
-// Breadcrumb component for page navigation
-interface BreadcrumbItem {
-    label: string
-    href?: string
-}
-
-interface BreadcrumbProps {
-    items: BreadcrumbItem[]
-    className?: string
-}
-
-export function Breadcrumb({ items, className }: BreadcrumbProps) {
-    return (
-        <nav className={cn("flex items-center space-x-2 text-sm", className)}>
-            {items.map((item, index) => (
-                <React.Fragment key={index}>
-                    {index > 0 && (
-                        <span className="text-muted-foreground">/</span>
-                    )}
-                    {item.href ? (
-                        <Link
-                            href={item.href}
-                            className="text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            {item.label}
-                        </Link>
-                    ) : (
-                        <span className="font-medium text-foreground">
-                            {item.label}
-                        </span>
-                    )}
-                </React.Fragment>
-            ))}
-        </nav>
-    )
-}
-
-// Page header component
-interface PageHeaderProps {
-    title: string
-    description?: string
-    breadcrumb?: BreadcrumbItem[]
-    actions?: React.ReactNode
-    className?: string
-}
-
-export function PageHeader({
-    title,
-    description,
-    breadcrumb,
-    actions,
-    className
-}: PageHeaderProps) {
-    return (
-        <div className={cn("space-y-4", className)}>
-            {breadcrumb && <Breadcrumb items={breadcrumb} />}
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="space-y-2">
-                    <h1 className="text-3xl font-bold tracking-tight lg:text-4xl">
-                        {title}
-                    </h1>
-                    {description && (
-                        <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
-                            {description}
-                        </p>
-                    )}
                 </div>
+            </nav>
 
-                {actions && (
-                    <div className="flex items-center space-x-2">
-                        {actions}
+            {/* Mobile Navigation Overlay */}
+            {isOpen && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden"
+                        onClick={() => setIsOpen(false)}
+                    />
+                    <div className="fixed top-[65px] right-6 w-80 z-50 md:hidden">
+                        <div className="rounded-lg border bg-background p-6 shadow-xl">
+                            <div className="space-y-4">
+                                {/* Mobile Wallet Section */}
+                                <div className="pb-4 border-b border-border">
+                                    {isConnected ? (
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <div className="font-semibold">{userBalance} SUI</div>
+                                                    <div className="text-sm text-muted-foreground">Connected</div>
+                                                </div>
+                                                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                            </div>
+                                            <button
+                                                onClick={disconnectWallet}
+                                                className="w-full border rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                                            >
+                                                Disconnect Wallet
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={connectWallet}
+                                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                                        >
+                                            <Wallet className="h-4 w-4 mr-2 inline" />
+                                            Connect Sui Wallet
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Mobile Navigation Links */}
+                                {navigationItems.map((item) => (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={cn(
+                                            "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                                            pathname === item.href
+                                                ? "bg-primary text-primary-foreground"
+                                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                        )}
+                                    >
+                                        {item.icon}
+                                        <span>{item.label}</span>
+                                    </Link>
+                                ))}
+
+                                {/* Mobile External Links */}
+                                <div className="pt-4 border-t border-border space-y-2">
+                                    {externalLinks.map((item) => (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                        >
+                                            {item.icon}
+                                            <span>{item.label}</span>
+                                        </Link>
+                                    ))}
+                                </div>
+
+                                {/* Mobile Theme Toggle */}
+                                <div className="pt-4 border-t border-border">
+                                    <button
+                                        onClick={toggleTheme}
+                                        className="w-full justify-start border rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors flex items-center"
+                                    >
+                                        {theme === 'dark' ? (
+                                            <>
+                                                <Sun className="h-4 w-4 mr-2" />
+                                                Light Mode
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Moon className="h-4 w-4 mr-2" />
+                                                Dark Mode
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                )}
-            </div>
-        </div>
+                </>
+            )}
+        </>
     )
 }

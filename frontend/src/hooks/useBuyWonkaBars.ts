@@ -1,3 +1,8 @@
+import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit"
+import { TransactionBlock } from "@mysten/sui.js/transactions"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { MELTYFI_PACKAGE_ID, PROTOCOL_OBJECT_ID } from "../constants/contracts"
+
 // src/hooks/useBuyWonkaBars.ts
 export function useBuyWonkaBars() {
     const suiClient = useSuiClient()
@@ -33,9 +38,9 @@ export function useBuyWonkaBars() {
 
             txb.setGasBudget(10_000_000)
 
-            const response = await suiClient.signAndExecuteTransactionBlock({
+            // Use wallet adapter to sign and execute the transaction block
+            const response = await currentAccount?.signAndExecuteTransactionBlock({
                 transactionBlock: txb,
-                signer: currentAccount,
                 options: {
                     showEffects: true,
                     showObjectChanges: true,

@@ -1,6 +1,6 @@
 // src/hooks/useCreateLottery.ts
-import { PROTOCOL_OBJECT_ID } from '@/constants/contracts'
-import { useCurrentAccount } from '@mysten/dapp-kit'
+import { MELTYFI_PACKAGE_ID, PROTOCOL_OBJECT_ID } from '@/constants/contracts'
+import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 

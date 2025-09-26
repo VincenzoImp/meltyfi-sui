@@ -26,7 +26,8 @@ export function useLotteries(filters: FilterState) {
                     options: {
                         showContent: true,
                         showType: true,
-                    }
+                    },
+                    owner: ''
                 })
 
                 // Transform the response into our Lottery type
@@ -64,8 +65,10 @@ export function useLotteries(filters: FilterState) {
 
                 // Status filter
                 if (filters.status !== 'all') {
-                    const statusMap = { active: 0, cancelled: 1, concluded: 2 }
-                    filtered = filtered.filter(l => l.state === statusMap[filters.status])
+                    const statusMap: Record<'active' | 'cancelled' | 'concluded', number> = { active: 0, cancelled: 1, concluded: 2 }
+                    if (filters.status in statusMap) {
+                        filtered = filtered.filter(l => l.state === statusMap[filters.status as keyof typeof statusMap])
+                    }
                 }
 
                 // Price range filter
