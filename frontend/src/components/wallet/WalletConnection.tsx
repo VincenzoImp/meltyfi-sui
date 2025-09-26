@@ -18,14 +18,12 @@ export function WalletConnection() {
                         </span>
                     </div>
                     <ConnectButton
-                        connectText="Connect Wallet"
-                        connectedText="Connected"
+                        connectText="Connected"
                     />
                 </div>
             ) : (
                 <ConnectButton
                     connectText="Connect Wallet"
-                    connectedText="Connected"
                 />
             )}
         </div>

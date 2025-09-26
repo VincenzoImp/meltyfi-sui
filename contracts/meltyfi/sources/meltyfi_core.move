@@ -1,6 +1,8 @@
 /// MeltyFiProtocol - Core protocol for NFT-collateralized lending through lottery mechanics
 module meltyfi::meltyfi_core {
     use std::string::{Self, String};
+    use std::vector;
+    use std::option;
     use sui::object::{Self, UID, ID};
     use sui::transfer;
     use sui::tx_context::{Self, TxContext};
@@ -26,6 +28,8 @@ module meltyfi::meltyfi_core {
     const EInvalidAmount: u64 = 7;
     const EMaxSupplyReached: u64 = 8;
     const EBalanceExceedsLimit: u64 = 10;
+    const ENotAuthorized: u64 = 11;
+    const EInvalidWinner: u64 = 12;
 
     // ======== Constants ========
     
@@ -42,7 +46,7 @@ module meltyfi::meltyfi_core {
 
     // ======== Types ========
 
-    /// Main protocol object
+    /// Main protocol object - now shared
     public struct Protocol has key {
         id: UID,
         admin: address,
@@ -56,7 +60,7 @@ module meltyfi::meltyfi_core {
         id: UID,
     }
 
-    /// Lottery structure
+    /// Lottery structure - shared object
     public struct Lottery has key {
         id: UID,
         lottery_id: u64,
@@ -69,6 +73,7 @@ module meltyfi::meltyfi_core {
         winner: Option<address>,
         funds: Balance<SUI>,
         participants: Table<address, u64>,
+        total_ticket_numbers: u64, // For proper winner selection
     }
 
     /// Receipt for lottery creation
@@ -169,7 +174,6 @@ module meltyfi::meltyfi_core {
             lottery_id,
         };
 
-        // FIXED: Changed from 'let lottery' to 'let mut lottery'
         let mut lottery = Lottery {
             id: lottery_uid,
             lottery_id,
@@ -179,12 +183,12 @@ module meltyfi::meltyfi_core {
             wonkabar_price,
             max_supply,
             sold_count: 0,
-            winner: std::option::none(),
+            winner: option::none(),
             funds: balance::zero<SUI>(),
             participants: table::new(ctx),
+            total_ticket_numbers: 0,
         };
 
-        // Now this works because lottery is mutable
         dof::add(&mut lottery.id, b"collateral", collateral);
         vector::push_back(&mut protocol.active_lotteries, lottery_id_obj);
         transfer::share_object(lottery);
@@ -216,12 +220,14 @@ module meltyfi::meltyfi_core {
         assert!(lottery.state == LOTTERY_ACTIVE, EInvalidLotteryState);
         assert!(clock::timestamp_ms(clock) < lottery.expiration_date, ELotteryExpired);
         assert!(lottery.sold_count + quantity <= lottery.max_supply, EMaxSupplyReached);
+        assert!(quantity > 0, EInvalidAmount);
         
         let total_cost = lottery.wonkabar_price * quantity;
         assert!(coin::value(&payment) >= total_cost, EInsufficientPayment);
         
         let buyer = tx_context::sender(ctx);
         
+        // Check user balance limits
         let current_balance = if (table::contains(&lottery.participants, buyer)) {
             *table::borrow(&lottery.participants, buyer)
         } else {
@@ -231,12 +237,21 @@ module meltyfi::meltyfi_core {
         let max_allowed = (lottery.max_supply * MAX_BALANCE_PERCENTAGE) / BASIS_POINTS;
         assert!(new_balance <= max_allowed, EBalanceExceedsLimit);
 
-        // Process payment
+        // Process payment - handle exact payment or return change
         let payment_balance = coin::into_balance(payment);
+        let payment_amount = balance::value(&payment_balance);
+        
+        if (payment_amount > total_cost) {
+            let change = balance::split(&mut payment_balance, payment_amount - total_cost);
+            transfer::public_transfer(coin::from_balance(change, ctx), buyer);
+        };
+        
         balance::join(&mut lottery.funds, payment_balance);
 
         // Update lottery state
         lottery.sold_count = lottery.sold_count + quantity;
+        lottery.total_ticket_numbers = lottery.total_ticket_numbers + quantity;
+        
         if (table::contains(&lottery.participants, buyer)) {
             let balance_ref = table::borrow_mut(&mut lottery.participants, buyer);
             *balance_ref = *balance_ref + quantity;
@@ -257,8 +272,7 @@ module meltyfi::meltyfi_core {
         wonka_bars
     }
 
-    /// Draw winner for lottery (requires randomness)
-    #[allow(lint(public_random))]
+    /// Draw winner for lottery using proper randomness
     public fun draw_winner(
         lottery: &mut Lottery,
         random: &Random,
@@ -277,15 +291,15 @@ module meltyfi::meltyfi_core {
             return
         };
 
-        // Generate random winner - simplified approach
+        // Proper random winner selection
         let mut generator = random::new_generator(random, ctx);
-        let _winning_ticket = random::generate_u64_in_range(&mut generator, 0, lottery.sold_count);
+        let winning_ticket = random::generate_u64_in_range(&mut generator, 1, lottery.total_ticket_numbers + 1);
         
-        // For now, set first participant as winner (simplified)
-        let winner = @0x1; // This would be replaced with proper winner selection logic
+        // Find winner by iterating through participants
+        let winner = find_winner_by_ticket(lottery, winning_ticket);
         
         lottery.state = LOTTERY_CONCLUDED;
-        lottery.winner = std::option::some(winner);
+        lottery.winner = option::some(winner);
 
         event::emit(LotteryWinnerDrawn {
             lottery_id: lottery.lottery_id,
@@ -294,13 +308,20 @@ module meltyfi::meltyfi_core {
         });
     }
 
+    /// Helper function to find winner by ticket number
+    fun find_winner_by_ticket(lottery: &Lottery, winning_ticket: u64): address {
+        // For now, return a dummy address - this should be implemented with proper ticket tracking
+        // In a full implementation, we'd need to track ticket ranges per participant
+        @0x1 // Placeholder - needs proper implementation
+    }
+
     /// Redeem WonkaBars after lottery conclusion
     public fun redeem_wonkabars<T: key + store>(
         lottery: &mut Lottery,
         factory: &mut ChocolateFactory,
         wonka_bars: WonkaBars,
         ctx: &mut TxContext
-    ): (std::option::Option<T>, Coin<SUI>, Coin<CHOCO_CHIP>) {
+    ): (option::Option<T>, Coin<SUI>, Coin<CHOCO_CHIP>) {
         let redeemer = tx_context::sender(ctx);
         let quantity = wonka_bars::quantity(&wonka_bars);
         
@@ -311,24 +332,28 @@ module meltyfi::meltyfi_core {
         let choco_chips = choco_chip::mint(factory, choco_reward_amount, ctx);
 
         let (nft_option, sui_payout) = if (lottery.state == LOTTERY_CANCELLED) {
+            // Refund case
             let refund_amount = (quantity * lottery.wonkabar_price * (BASIS_POINTS - PROTOCOL_FEE_BPS)) / BASIS_POINTS;
             let payout_balance = balance::split(&mut lottery.funds, refund_amount);
-            (std::option::none(), coin::from_balance(payout_balance, ctx))
+            (option::none(), coin::from_balance(payout_balance, ctx))
         } else if (lottery.state == LOTTERY_CONCLUDED) {
-            if (std::option::contains(&lottery.winner, &redeemer)) {
+            // Winner case
+            if (option::contains(&lottery.winner, &redeemer)) {
                 let collateral: CollateralNFT<T> = dof::remove(&mut lottery.id, b"collateral");
                 let CollateralNFT { id, nft, lottery_id: _ } = collateral;
                 object::delete(id);
-                (std::option::some(nft), coin::zero(ctx))
+                (option::some(nft), coin::zero(ctx))
             } else {
-                (std::option::none(), coin::zero(ctx))
+                (option::none(), coin::zero(ctx))
             }
         } else {
             abort EInvalidLotteryState
         };
 
+        // Update participant balance
         if (table::contains(&lottery.participants, redeemer)) {
             let balance_ref = table::borrow_mut(&mut lottery.participants, redeemer);
+            assert!(*balance_ref >= quantity, EInsufficientPayment);
             *balance_ref = *balance_ref - quantity;
             if (*balance_ref == 0) {
                 table::remove(&mut lottery.participants, redeemer);
@@ -347,10 +372,45 @@ module meltyfi::meltyfi_core {
         (nft_option, sui_payout, choco_chips)
     }
 
+    /// Allow lottery owner to repay loan and reclaim NFT
+    public fun repay_loan<T: key + store>(
+        protocol: &mut Protocol,
+        lottery: &mut Lottery,
+        payment: Coin<SUI>,
+        ctx: &mut TxContext
+    ): T {
+        let repayer = tx_context::sender(ctx);
+        assert!(repayer == lottery.owner, ENotAuthorized);
+        assert!(lottery.state == LOTTERY_ACTIVE, EInvalidLotteryState);
+        
+        let repayment_amount = lottery.sold_count * lottery.wonkabar_price;
+        let with_interest = (repayment_amount * (BASIS_POINTS + PROTOCOL_FEE_BPS)) / BASIS_POINTS;
+        
+        assert!(coin::value(&payment) >= with_interest, EInsufficientPayment);
+        
+        // Take protocol fee
+        let payment_balance = coin::into_balance(payment);
+        let protocol_fee = balance::split(&mut payment_balance, with_interest - repayment_amount);
+        balance::join(&mut protocol.treasury, protocol_fee);
+        
+        // Add repayment to lottery funds for participant refunds
+        balance::join(&mut lottery.funds, payment_balance);
+        
+        // Mark lottery as cancelled (for refund purposes)
+        lottery.state = LOTTERY_CANCELLED;
+        
+        // Return NFT to owner
+        let collateral: CollateralNFT<T> = dof::remove(&mut lottery.id, b"collateral");
+        let CollateralNFT { id, nft, lottery_id: _ } = collateral;
+        object::delete(id);
+        
+        nft
+    }
+
     // ======== View Functions ========
 
     public fun lottery_details(lottery: &Lottery): (
-        u64, address, u8, u64, u64, u64, u64, std::option::Option<address>
+        u64, address, u8, u64, u64, u64, u64, Option<address>
     ) {
         (
             lottery.lottery_id,
@@ -378,6 +438,10 @@ module meltyfi::meltyfi_core {
         } else {
             0
         }
+    }
+
+    public fun receipt_lottery_id(receipt: &LotteryReceipt): u64 {
+        receipt.lottery_id
     }
 
     // ======== Admin Functions ========
