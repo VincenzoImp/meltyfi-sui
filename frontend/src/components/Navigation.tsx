@@ -15,7 +15,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import * as React from "react"
 import { useEffect, useState } from "react"
 
 interface NavItem {
@@ -63,15 +62,24 @@ export function Navigation() {
     const [isScrolled, setIsScrolled] = useState(false)
     const [isConnected, setIsConnected] = useState(false)
     const [userBalance, setUserBalance] = useState("0.000")
+    const [isMounted, setIsMounted] = useState(false)
     const pathname = usePathname()
+
+    // Handle mounting state to prevent hydration mismatch
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
 
     // Handle scroll effect
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20)
         }
-        window.addEventListener('scroll', handleScroll)
-        return () => window.removeEventListener('scroll', handleScroll)
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('scroll', handleScroll)
+            return () => window.removeEventListener('scroll', handleScroll)
+        }
     }, [])
 
     // Close mobile menu on route change
@@ -88,6 +96,27 @@ export function Navigation() {
     const disconnectWallet = () => {
         setIsConnected(false)
         setUserBalance("0.000")
+    }
+
+    // Don't render anything until mounted to prevent hydration issues
+    if (!isMounted) {
+        return (
+            <nav className="sticky top-0 z-50 w-full bg-gray-900/80 backdrop-blur-sm border-b border-white/5">
+                <div className="container mx-auto px-6">
+                    <div className="flex items-center justify-between h-16">
+                        <Link href="/" className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                                <Sparkles className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+                                MeltyFi
+                            </span>
+                        </Link>
+                        <div className="w-6 h-6" /> {/* Placeholder for consistency */}
+                    </div>
+                </div>
+            </nav>
+        )
     }
 
     return (
@@ -188,6 +217,7 @@ export function Navigation() {
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
                                 className="w-9 h-9 p-0 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
+                                aria-label="Toggle menu"
                             >
                                 {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
                             </button>

@@ -40,6 +40,7 @@ const features = [
   }
 ]
 
+// Static stats to prevent hydration issues
 const stats = [
   { label: "Total Volume", value: "2.4M SUI", change: "+12.5%", icon: <TrendingUp className="w-6 h-6 text-green-400" /> },
   { label: "Active Lotteries", value: "47", change: "+8", icon: <Trophy className="w-6 h-6 text-amber-400" /> },
@@ -54,7 +55,6 @@ const howItWorksSteps = [
     description: "Deposit your valuable NFT and set lottery parameters. Get 95% of funds immediately while keeping ownership rights.",
     icon: <Sparkles className="w-8 h-8" />,
     color: "from-amber-500 to-orange-500",
-    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=300&fit=crop"
   },
   {
     step: 2,
@@ -62,7 +62,6 @@ const howItWorksSteps = [
     description: "Lenders purchase WonkaBars (lottery tickets), funding your loan while getting a chance to win your NFT.",
     icon: <Gift className="w-8 h-8" />,
     color: "from-purple-500 to-pink-500",
-    image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400&h=300&fit=crop"
   },
   {
     step: 3,
@@ -70,16 +69,42 @@ const howItWorksSteps = [
     description: "Repay to keep your NFT, or let lottery conclude. Winners get NFTs, others get ChocoChips. Everyone benefits!",
     icon: <Trophy className="w-8 h-8" />,
     color: "from-green-500 to-emerald-500",
-    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop"
   }
 ]
 
 export default function HomePage() {
   const [isVisible, setIsVisible] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
 
+  // Handle mounting to prevent hydration issues
   useEffect(() => {
-    setIsVisible(true)
+    setIsMounted(true)
+    // Small delay to ensure proper mounting
+    const timer = setTimeout(() => {
+      setIsVisible(true)
+    }, 100)
+
+    return () => clearTimeout(timer)
   }, [])
+
+  // Don't render complex animations until mounted
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+        <div className="relative z-10 container mx-auto px-6 pt-20 pb-16">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-7xl font-bold mb-8 bg-gradient-to-r from-amber-400 via-purple-400 to-pink-500 bg-clip-text text-transparent leading-tight">
+              Welcome to<br />MeltyFi
+            </h1>
+            <p className="text-xl md:text-2xl text-white/80 mb-12 max-w-4xl mx-auto leading-relaxed">
+              The sweetest way to unlock liquidity from your NFTs. Create lotteries, fund loans, and everyone wins with our
+              innovative chocolate factory-inspired DeFi protocol on Sui.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
@@ -183,7 +208,6 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {howItWorksSteps.map((step, index) => (
             <div key={index} className="group">
-              {/* Step Content */}
               <div className="text-center">
                 <div className="flex justify-center mb-4">
                   <div className={cn(
@@ -204,87 +228,89 @@ export default function HomePage() {
       </section>
 
       {/* Protocol Deep Dive */}
-      <section className="relative z-10 container mx-auto px-6 py-20 bg-black/20 backdrop-blur-sm rounded-2xl my-20">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-            The Chocolate Factory Protocol
-          </h2>
-          <p className="text-xl text-white/80 max-w-4xl mx-auto leading-relaxed">
-            Like Willy Wonka's magical factory, MeltyFi transforms your NFTs into golden tickets of opportunity.
-            Here's how our sweet protocol works its magic on Sui blockchain.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2 text-white">Instant NFT Liquidity</h3>
-                <p className="text-white/80 leading-relaxed">
-                  Transform your illiquid NFTs into immediate cash flow. Create a lottery with your valuable NFT as the prize,
-                  and receive 95% of the funding instantly when WonkaBars are purchased.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
-                <Gift className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2 text-white">WonkaBar Magic</h3>
-                <p className="text-white/80 leading-relaxed">
-                  Lenders buy WonkaBars (lottery tickets) to participate. Each WonkaBar represents both a funding contribution
-                  and a chance to win the NFT prize, creating excitement around lending.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2 text-white">ChocoChip Rewards</h3>
-                <p className="text-white/80 leading-relaxed">
-                  Win or lose, everyone gets rewarded! All participants receive ChocoChips, our protocol token that represents
-                  your contribution to the ecosystem and provides additional utility.
-                </p>
-              </div>
-            </div>
+      <section className="relative z-10 container mx-auto px-6 py-20">
+        <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-8 md:p-12">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+              The Chocolate Factory Protocol
+            </h2>
+            <p className="text-xl text-white/80 max-w-4xl mx-auto leading-relaxed">
+              Like Willy Wonka's magical factory, MeltyFi transforms your NFTs into golden tickets of opportunity.
+              Here's how our sweet protocol works its magic on Sui blockchain.
+            </p>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-2xl p-8 border border-white/10">
-            <h3 className="text-2xl font-bold mb-6 text-center text-white">Two Sweet Scenarios</h3>
-
-            <div className="space-y-6">
-              <div className="bg-green-500/20 rounded-lg p-6 border border-green-500/30">
-                <h4 className="font-semibold text-green-300 mb-3 flex items-center">
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Successful Repayment
-                </h4>
-                <ul className="space-y-2 text-sm text-white/80">
-                  <li>• Borrower repays loan before expiration</li>
-                  <li>• Borrower gets NFT back + ChocoChips</li>
-                  <li>• Lenders get full refund + ChocoChips</li>
-                  <li>• Everyone wins! 🎉</li>
-                </ul>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2 text-white">Instant NFT Liquidity</h3>
+                  <p className="text-white/80 leading-relaxed">
+                    Transform your illiquid NFTs into immediate cash flow. Create a lottery with your valuable NFT as the prize,
+                    and receive 95% of the funding instantly when WonkaBars are purchased.
+                  </p>
+                </div>
               </div>
 
-              <div className="bg-purple-500/20 rounded-lg p-6 border border-purple-500/30">
-                <h4 className="font-semibold text-purple-300 mb-3 flex items-center">
-                  <Trophy className="w-5 h-5 mr-2" />
-                  Lottery Conclusion
-                </h4>
-                <ul className="space-y-2 text-sm text-white/80">
-                  <li>• Lottery expires, random winner selected</li>
-                  <li>• Lucky winner gets the NFT + ChocoChips</li>
-                  <li>• Other participants get ChocoChips</li>
-                  <li>• Borrower keeps the borrowed funds</li>
-                </ul>
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                  <Gift className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2 text-white">WonkaBar Magic</h3>
+                  <p className="text-white/80 leading-relaxed">
+                    Lenders buy WonkaBars (lottery tickets) to participate. Each WonkaBar represents both a funding contribution
+                    and a chance to win the NFT prize, creating excitement around lending.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2 text-white">ChocoChip Rewards</h3>
+                  <p className="text-white/80 leading-relaxed">
+                    Win or lose, everyone gets rewarded! All participants receive ChocoChips, our protocol token that represents
+                    your contribution to the ecosystem and provides additional utility.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-2xl p-8 border border-white/10">
+              <h3 className="text-2xl font-bold mb-6 text-center text-white">Two Sweet Scenarios</h3>
+
+              <div className="space-y-6">
+                <div className="bg-green-500/20 rounded-lg p-6 border border-green-500/30">
+                  <h4 className="font-semibold text-green-300 mb-3 flex items-center">
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Successful Repayment
+                  </h4>
+                  <ul className="space-y-2 text-sm text-white/80">
+                    <li>• Borrower repays loan before expiration</li>
+                    <li>• Borrower gets NFT back + ChocoChips</li>
+                    <li>• Lenders get full refund + ChocoChips</li>
+                    <li>• Everyone wins! 🎉</li>
+                  </ul>
+                </div>
+
+                <div className="bg-purple-500/20 rounded-lg p-6 border border-purple-500/30">
+                  <h4 className="font-semibold text-purple-300 mb-3 flex items-center">
+                    <Trophy className="w-5 h-5 mr-2" />
+                    Lottery Conclusion
+                  </h4>
+                  <ul className="space-y-2 text-sm text-white/80">
+                    <li>• Lottery expires, random winner selected</li>
+                    <li>• Lucky winner gets the NFT + ChocoChips</li>
+                    <li>• Other participants get ChocoChips</li>
+                    <li>• Borrower keeps the borrowed funds</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -310,11 +336,14 @@ export default function HomePage() {
             </button>
           </Link>
 
-          <Link href="https://docs.meltyfi.com" target="_blank">
-            <button className="border border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold backdrop-blur-sm transition-all duration-300 rounded-md">
-              Learn More
-            </button>
-          </Link>
+          <a
+            href="https://docs.meltyfi.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold backdrop-blur-sm transition-all duration-300 rounded-md inline-block"
+          >
+            Learn More
+          </a>
         </div>
       </section>
     </div>
