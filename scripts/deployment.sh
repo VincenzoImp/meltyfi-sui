@@ -205,7 +205,7 @@ check_balance_for_deployment() {
         
         info ""
         info "🚰 Get testnet SUI tokens:"
-        info "1. Web Faucet: https://faucet.testnet.sui.io/gas"
+        info "1. Web Faucet: https://faucet.testnet.sui.io"
         info "2. Enter your address: $DEPLOYER_ADDRESS"
         info "3. Discord: https://discord.gg/sui (#testnet-faucet channel)"
         info "4. CLI: sui client faucet"
@@ -503,7 +503,7 @@ ${CYAN}📋 Deployment Summary:${NC}
 ${CYAN}🔗 Explorer Links:${NC}
 ├─ Package: ${BLUE}https://suiexplorer.com/object/$PACKAGE_ID?network=testnet${NC}
 ├─ Transaction: ${BLUE}https://suiexplorer.com/txblock/$TX_DIGEST?network=testnet${NC}
-└─ Testnet Faucet: ${BLUE}https://faucet.testnet.sui.io/gas${NC}
+└─ Testnet Faucet: ${BLUE}https://faucet.testnet.sui.io${NC}
 
 ${CYAN}🚀 Next Steps:${NC}
 1. ${GREEN}Start frontend:${NC} cd frontend && npm run dev

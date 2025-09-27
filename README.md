@@ -100,7 +100,7 @@ NETWORK=testnet
 You'll need testnet SUI to deploy contracts and interact with the protocol:
 
 1. **Web Faucet (Recommended)**:
-   - Visit: [https://faucet.testnet.sui.io/gas](https://faucet.testnet.sui.io/gas)
+   - Visit: [https://faucet.testnet.sui.io](https://faucet.testnet.sui.io)
    - Enter your Sui address
    - Complete captcha and request tokens
 
@@ -131,7 +131,7 @@ npm run validate:testnet
 ## 📚 **Technical Documentation**
 
 ### **Testnet Resources**
-- 🚰 [Testnet Faucet](https://faucet.testnet.sui.io/gas)
+- 🚰 [Testnet Faucet](https://faucet.testnet.sui.io)
 - 🔍 [Testnet Explorer](https://suiexplorer.com/?network=testnet)
 - 📖 [Sui Testnet Guide](https://docs.sui.io/guides/developer/getting-started/sui-environment)
 
@@ -190,7 +190,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
    ```
 
 4. **✅ Get Testnet Tokens**
-   - Visit: [https://faucet.testnet.sui.io/gas](https://faucet.testnet.sui.io/gas)
+   - Visit: [https://faucet.testnet.sui.io](https://faucet.testnet.sui.io)
    - Request testnet SUI for your address
 
 5. **✅ Deploy and Test**
@@ -262,7 +262,7 @@ sui client new-env --alias testnet --rpc https://fullnode.testnet.sui.io:443
 **❓ "No SUI balance"**
 ```bash
 # Get testnet SUI
-curl -X POST https://faucet.testnet.sui.io/gas \
+curl -X POST https://faucet.testnet.sui.io \
   -H "Content-Type: application/json" \
   -d '{"FixedAmountRequest":{"recipient":"YOUR_ADDRESS"}}'
 ```
@@ -295,7 +295,7 @@ If you encounter issues:
 
 **Ready to turn your NFTs into liquid gold on testnet? Join the sweetest DeFi testing experience on Sui!** 🍫✨
 
-[**🚀 Start Testing**](https://github.com/VincenzoImp/MeltyFi) | [**📖 Read Docs**](https://docs.meltyfi.com) | [**💬 Join Discord**](https://discord.gg/meltyfi) | [**🚰 Get Testnet SUI**](https://faucet.testnet.sui.io/gas)Smart Contract Architecture**
+[**🚀 Start Testing**](https://github.com/VincenzoImp/MeltyFi) | [**📖 Read Docs**](https://docs.meltyfi.com) | [**💬 Join Discord**](https://discord.gg/meltyfi) | [**🚰 Get Testnet SUI**](https://faucet.testnet.sui.io)Smart Contract Architecture**
 
 #### **Core Modules**
 
@@ -421,7 +421,7 @@ sui client new-env --alias testnet --rpc https://fullnode.testnet.sui.io:443
 sui client switch --env testnet
 
 # 2. Get testnet SUI
-# Visit: https://faucet.testnet.sui.io/gas
+# Visit: https://faucet.testnet.sui.io
 
 # 3. Build contracts
 cd contracts/meltyfi

@@ -73,7 +73,7 @@ function TestnetWarningBanner() {
                 <span>
                     You are connected to Sui Testnet. Use only testnet tokens.
                     <a
-                        href="https://faucet.testnet.sui.io/gas"
+                        href="https://faucet.testnet.sui.io"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline ml-1 font-semibold hover:text-gray-800"
