@@ -547,19 +547,11 @@ export default function ProfilePage() {
                     </Tabs.List>
 
                     <Tabs.Content value="owned" className="space-y-6">
-                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-                            <div>
-                                <h2 className="text-2xl font-bold text-white mb-2">Your Active Lotteries</h2>
-                                <p className="text-white/60">
-                                    Manage your NFT lotteries and repay loans to get your assets back
-                                </p>
-                            </div>
-                            <Link href="/lotteries">
-                                <button className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-medium px-4 py-2 rounded-md transition-colors flex items-center">
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Create New Lottery
-                                </button>
-                            </Link>
+                        <div>
+                            <h2 className="text-2xl font-bold text-white mb-2">Your Active Lotteries</h2>
+                            <p className="text-white/60">
+                                Manage your NFT lotteries and repay loans to get your assets back
+                            </p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
