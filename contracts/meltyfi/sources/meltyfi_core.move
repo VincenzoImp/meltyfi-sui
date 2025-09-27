@@ -1,10 +1,9 @@
-/// MeltyFiProtocol - Core protocol for NFT-collateralized lending through lottery mechanics
+/// MeltyFi Protocol - Core protocol for NFT-collateralized lending through lottery mechanics
 module meltyfi::meltyfi_core {
     use std::string::{Self, String};
     use std::vector;
-    use std::option;
+    use std::option::{Self, Option};
     use sui::object::{Self, UID, ID};
-    use sui::transfer;
     use sui::tx_context::{Self, TxContext};
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
@@ -14,6 +13,7 @@ module meltyfi::meltyfi_core {
     use sui::table::{Self, Table};
     use sui::dynamic_object_field as dof;
     use sui::random::{Self, Random};
+    use sui::transfer;
     
     use meltyfi::choco_chip::{Self, ChocolateFactory, CHOCO_CHIP};
     use meltyfi::wonka_bars::{Self, WonkaBars};
@@ -29,6 +29,8 @@ module meltyfi::meltyfi_core {
     const EMaxSupplyReached: u64 = 8;
     const EBalanceExceedsLimit: u64 = 10;
     const ENotAuthorized: u64 = 11;
+    const ENoParticipants: u64 = 12;
+    const EInvalidWinningTicket: u64 = 13;
 
     // ======== Constants ========
     
@@ -45,13 +47,14 @@ module meltyfi::meltyfi_core {
 
     // ======== Types ========
 
-    /// Main protocol object - now shared
+    /// Main protocol object - shared
     public struct Protocol has key {
         id: UID,
         admin: address,
         total_lotteries: u64,
         treasury: Balance<SUI>,
         active_lotteries: vector<ID>,
+        paused: bool, // Emergency pause mechanism
     }
 
     /// Admin capability
@@ -72,7 +75,15 @@ module meltyfi::meltyfi_core {
         winner: Option<address>,
         funds: Balance<SUI>,
         participants: Table<address, u64>,
-        total_ticket_numbers: u64, // For proper winner selection
+        participant_list: vector<address>, // For winner selection
+        total_ticket_numbers: u64,
+        ticket_ranges: Table<address, TicketRange>, // Track ticket ranges per user
+    }
+
+    /// Ticket range for proper winner selection
+    public struct TicketRange has store, copy, drop {
+        start: u64,
+        end: u64,
     }
 
     /// Receipt for lottery creation
@@ -104,11 +115,14 @@ module meltyfi::meltyfi_core {
         buyer: address,
         quantity: u64,
         total_cost: u64,
+        ticket_range_start: u64,
+        ticket_range_end: u64,
     }
 
     public struct LotteryWinnerDrawn has copy, drop {
         lottery_id: u64,
         winner: address,
+        winning_ticket: u64,
         total_participants: u64,
     }
 
@@ -117,11 +131,17 @@ module meltyfi::meltyfi_core {
         redeemer: address,
         quantity: u64,
         payout: u64,
+        choco_reward: u64,
     }
 
     public struct LotteryCancelled has copy, drop {
         lottery_id: u64,
         reason: String,
+    }
+
+    public struct ProtocolPaused has copy, drop {
+        paused: bool,
+        admin: address,
     }
 
     // ======== Initialization ========
@@ -135,6 +155,7 @@ module meltyfi::meltyfi_core {
             total_lotteries: 0,
             treasury: balance::zero<SUI>(),
             active_lotteries: vector::empty(),
+            paused: false,
         };
 
         let admin_cap = AdminCap {
@@ -157,6 +178,7 @@ module meltyfi::meltyfi_core {
         clock: &Clock,
         ctx: &mut TxContext
     ): LotteryReceipt {
+        assert!(!protocol.paused, EInvalidLotteryState);
         assert!(expiration_date > clock::timestamp_ms(clock), ELotteryExpired);
         assert!(wonkabar_price > 0, EInvalidAmount);
         assert!(max_supply > 0 && max_supply <= MAX_WONKABAR_SUPPLY, EInvalidAmount);
@@ -185,7 +207,9 @@ module meltyfi::meltyfi_core {
             winner: option::none(),
             funds: balance::zero<SUI>(),
             participants: table::new(ctx),
+            participant_list: vector::empty(),
             total_ticket_numbers: 0,
+            ticket_ranges: table::new(ctx),
         };
 
         dof::add(&mut lottery.id, b"collateral", collateral);
@@ -216,6 +240,7 @@ module meltyfi::meltyfi_core {
         clock: &Clock,
         ctx: &mut TxContext
     ): WonkaBars {
+        assert!(!_protocol.paused, EInvalidLotteryState);
         assert!(lottery.state == LOTTERY_ACTIVE, EInvalidLotteryState);
         assert!(clock::timestamp_ms(clock) < lottery.expiration_date, ELotteryExpired);
         assert!(lottery.sold_count + quantity <= lottery.max_supply, EMaxSupplyReached);
@@ -247,6 +272,22 @@ module meltyfi::meltyfi_core {
         
         balance::join(&mut lottery.funds, payment_balance);
 
+        // Calculate ticket range for this purchase
+        let ticket_start = lottery.total_ticket_numbers + 1;
+        let ticket_end = lottery.total_ticket_numbers + quantity;
+
+        // Update ticket range for user
+        if (table::contains(&lottery.ticket_ranges, buyer)) {
+            let existing_range = table::borrow_mut(&mut lottery.ticket_ranges, buyer);
+            existing_range.end = ticket_end;
+        } else {
+            table::add(&mut lottery.ticket_ranges, buyer, TicketRange {
+                start: ticket_start,
+                end: ticket_end,
+            });
+            vector::push_back(&mut lottery.participant_list, buyer);
+        };
+
         // Update lottery state
         lottery.sold_count = lottery.sold_count + quantity;
         lottery.total_ticket_numbers = lottery.total_ticket_numbers + quantity;
@@ -266,6 +307,8 @@ module meltyfi::meltyfi_core {
             buyer,
             quantity,
             total_cost,
+            ticket_range_start: ticket_start,
+            ticket_range_end: ticket_end,
         });
 
         wonka_bars
@@ -295,7 +338,7 @@ module meltyfi::meltyfi_core {
         let mut generator = random::new_generator(random, ctx);
         let winning_ticket = random::generate_u64_in_range(&mut generator, 1, lottery.total_ticket_numbers + 1);
         
-        // Find winner by iterating through participants
+        // Find winner by ticket number
         let winner = find_winner_by_ticket(lottery, winning_ticket);
         
         lottery.state = LOTTERY_CONCLUDED;
@@ -304,19 +347,35 @@ module meltyfi::meltyfi_core {
         event::emit(LotteryWinnerDrawn {
             lottery_id: lottery.lottery_id,
             winner,
+            winning_ticket,
             total_participants: lottery.sold_count,
         });
     }
 
-    /// Helper function to find winner by ticket number
-    #[allow(unused_variable)]
-    fun find_winner_by_ticket(_lottery: &Lottery, _winning_ticket: u64): address {
-        // For now, return a dummy address - this should be implemented with proper ticket tracking
-        // In a full implementation, we'd need to track ticket ranges per participant
-        @0x1 // Placeholder - needs proper implementation
+    /// Helper function to find winner by ticket number - FIXED IMPLEMENTATION
+    fun find_winner_by_ticket(lottery: &Lottery, winning_ticket: u64): address {
+        assert!(winning_ticket <= lottery.total_ticket_numbers, EInvalidWinningTicket);
+        assert!(!vector::is_empty(&lottery.participant_list), ENoParticipants);
+
+        let participants_count = vector::length(&lottery.participant_list);
+        let mut i = 0;
+
+        while (i < participants_count) {
+            let participant = vector::borrow(&lottery.participant_list, i);
+            let ticket_range = table::borrow(&lottery.ticket_ranges, *participant);
+            
+            if (winning_ticket >= ticket_range.start && winning_ticket <= ticket_range.end) {
+                return *participant
+            };
+            
+            i = i + 1;
+        };
+
+        // Fallback to first participant if no match (should not happen)
+        *vector::borrow(&lottery.participant_list, 0)
     }
 
-    /// Redeem WonkaBars after lottery conclusion
+    /// Redeem WonkaBars after lottery conclusion - FIXED IMPLEMENTATION
     public fun redeem_wonkabars<T: key + store>(
         lottery: &mut Lottery,
         factory: &mut ChocolateFactory,
@@ -330,7 +389,8 @@ module meltyfi::meltyfi_core {
         assert!(lottery.state != LOTTERY_ACTIVE, EInvalidLotteryState);
 
         let choco_reward_amount = quantity * CHOCOCHIPS_PER_SUI;
-        // Fix: Correct parameter order for choco_chip::mint
+        
+        // FIXED: Correct parameter order for choco_chip::mint
         let choco_chips = choco_chip::mint(factory, choco_reward_amount, redeemer, ctx);
 
         let (nft_option, sui_payout) = if (lottery.state == LOTTERY_CANCELLED) {
@@ -369,6 +429,7 @@ module meltyfi::meltyfi_core {
             redeemer,
             quantity,
             payout: coin::value(&sui_payout),
+            choco_reward: choco_reward_amount,
         });
 
         (nft_option, sui_payout, choco_chips)
@@ -381,6 +442,7 @@ module meltyfi::meltyfi_core {
         payment: Coin<SUI>,
         ctx: &mut TxContext
     ): T {
+        assert!(!protocol.paused, EInvalidLotteryState);
         let repayer = tx_context::sender(ctx);
         assert!(repayer == lottery.owner, ENotAuthorized);
         assert!(lottery.state == LOTTERY_ACTIVE, EInvalidLotteryState);
@@ -392,6 +454,14 @@ module meltyfi::meltyfi_core {
         
         // Take protocol fee
         let payment_balance = coin::into_balance(payment);
+        let payment_amount = balance::value(&payment_balance);
+        
+        // Handle exact payment or return change
+        if (payment_amount > with_interest) {
+            let change = balance::split(&mut payment_balance, payment_amount - with_interest);
+            transfer::public_transfer(coin::from_balance(change, ctx), repayer);
+        };
+        
         let protocol_fee = balance::split(&mut payment_balance, with_interest - repayment_amount);
         balance::join(&mut protocol.treasury, protocol_fee);
         
@@ -426,11 +496,12 @@ module meltyfi::meltyfi_core {
         )
     }
 
-    public fun protocol_stats(protocol: &Protocol): (u64, u64, u64) {
+    public fun protocol_stats(protocol: &Protocol): (u64, u64, u64, bool) {
         (
             protocol.total_lotteries,
             balance::value(&protocol.treasury),
-            vector::length(&protocol.active_lotteries)
+            vector::length(&protocol.active_lotteries),
+            protocol.paused,
         )
     }
 
@@ -442,8 +513,25 @@ module meltyfi::meltyfi_core {
         }
     }
 
+    public fun user_ticket_range(lottery: &Lottery, user: address): (u64, u64) {
+        if (table::contains(&lottery.ticket_ranges, user)) {
+            let range = table::borrow(&lottery.ticket_ranges, user);
+            (range.start, range.end)
+        } else {
+            (0, 0)
+        }
+    }
+
     public fun receipt_lottery_id(receipt: &LotteryReceipt): u64 {
         receipt.lottery_id
+    }
+
+    public fun is_lottery_winner(lottery: &Lottery, user: address): bool {
+        if (option::is_some(&lottery.winner)) {
+            option::contains(&lottery.winner, &user)
+        } else {
+            false
+        }
     }
 
     // ======== Admin Functions ========
@@ -458,10 +546,62 @@ module meltyfi::meltyfi_core {
         coin::from_balance(withdrawn_balance, ctx)
     }
 
+    public fun pause_protocol(
+        protocol: &mut Protocol,
+        _: &AdminCap,
+        ctx: &mut TxContext
+    ) {
+        protocol.paused = true;
+        event::emit(ProtocolPaused {
+            paused: true,
+            admin: tx_context::sender(ctx),
+        });
+    }
+
+    public fun unpause_protocol(
+        protocol: &mut Protocol,
+        _: &AdminCap,
+        ctx: &mut TxContext
+    ) {
+        protocol.paused = false;
+        event::emit(ProtocolPaused {
+            paused: false,
+            admin: tx_context::sender(ctx),
+        });
+    }
+
+    public fun update_admin(
+        protocol: &mut Protocol,
+        _: &AdminCap,
+        new_admin: address,
+    ) {
+        protocol.admin = new_admin;
+    }
+
+    // ======== Emergency Functions ========
+
+    public fun emergency_cancel_lottery(
+        lottery: &mut Lottery,
+        _: &AdminCap,
+    ) {
+        assert!(lottery.state == LOTTERY_ACTIVE, EInvalidLotteryState);
+        lottery.state = LOTTERY_CANCELLED;
+        
+        event::emit(LotteryCancelled {
+            lottery_id: lottery.lottery_id,
+            reason: string::utf8(b"Emergency cancellation by admin")
+        });
+    }
+
     // ======== Test Functions ========
     
     #[test_only]
     public fun init_for_testing(ctx: &mut TxContext) {
         init(ctx)
+    }
+
+    #[test_only]
+    public fun get_ticket_ranges_for_testing(lottery: &Lottery): &Table<address, TicketRange> {
+        &lottery.ticket_ranges
     }
 }
