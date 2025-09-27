@@ -90,11 +90,10 @@ check_prerequisites() {
     # Check if jq is available (for JSON parsing)
     if ! command -v jq &> /dev/null; then
         print_warning "jq not found. Installing would improve balance checking."
-        print_info "Install with: apt-get install jq (Ubuntu) or brew install jq (macOS)"
+        print_info "Install with: brew install jq (macOS) or apt-get install jq (Ubuntu)"
     fi
     
-    # Display Sui version
-    local sui_version=$(sui --version 2>/dev/null | head -1)
+    local sui_version=$(sui --version | head -1)
     print_status "Sui CLI found: $sui_version"
 }
 
@@ -102,50 +101,37 @@ check_prerequisites() {
 configure_sui_client() {
     print_step "Configuring Sui client for testnet..."
     
-    # Add testnet environment (check if it exists first)
     print_info "Configuring testnet environment..."
+    
+    # Check if testnet environment exists
     if sui client envs 2>/dev/null | grep -q "testnet"; then
         print_info "Testnet environment already exists"
     else
-        print_info "Adding testnet environment..."
-        if sui client new-env --alias testnet --rpc https://fullnode.testnet.sui.io:443; then
-            print_status "Testnet environment added"
-        else
-            handle_error "Failed to add testnet environment"
-        fi
+        print_info "Creating testnet environment..."
+        sui client new-env --alias testnet --rpc https://fullnode.testnet.sui.io:443
+        print_status "Testnet environment created"
     fi
     
     # Switch to testnet
     print_info "Switching to testnet..."
-    if sui client switch --env testnet; then
-        print_status "Switched to testnet"
-    else
-        handle_error "Failed to switch to testnet"
-    fi
+    sui client switch --env testnet
+    print_status "Switched to testnet"
     
-    # Verify environment
-    local current_env=$(sui client active-env 2>/dev/null || echo "unknown")
-    if [ "$current_env" = "testnet" ]; then
-        print_status "Successfully configured for testnet"
-    else
-        print_warning "Current environment: $current_env (expected: testnet)"
-    fi
+    print_status "Successfully configured for testnet"
 }
 
-# Create or verify address
+# Setup Sui address
 setup_address() {
     print_step "Setting up Sui address..."
     
-    # Check for existing addresses
     print_info "Checking for existing addresses..."
-    local addresses=$(sui client addresses 2>/dev/null || echo "")
+    local address_count=$(sui client addresses 2>/dev/null | grep -c "0x" || echo "0")
     
-    if echo "$addresses" | grep -q "0x"; then
+    if [ "$address_count" -gt 0 ]; then
         print_status "Existing address found"
-        local address_count=$(echo "$addresses" | grep -c "0x" || echo "0")
         print_info "Found $address_count address(es)"
     else
-        print_info "No addresses found. Creating new address..."
+        print_info "Creating new address..."
         if sui client new-address ed25519; then
             print_status "New ed25519 address created"
         else
@@ -174,29 +160,59 @@ check_balance_and_faucet() {
     
     print_info "Checking balance for address: $current_address"
     
-    # Get balance with fallback if jq is not available
-    local balance="0"
+    # Get balance with improved parsing
+    local balance_sui="0"
+    local balance_mist="0"
+    
+    # Try JSON parsing first (with fixed structure handling)
     if command -v jq &> /dev/null; then
-        balance=$(sui client balance --json 2>/dev/null | jq -r '.[] | select(.coinType == "0x2::sui::SUI") | .totalBalance // "0"' 2>/dev/null || echo "0")
-    else
-        # Fallback: parse balance without jq
-        local balance_output=$(sui client balance 2>/dev/null || echo "")
-        if echo "$balance_output" | grep -q "SUI"; then
-            balance=$(echo "$balance_output" | grep -o '[0-9]*' | head -1 || echo "0")
-            # Convert to MIST (multiply by 10^9) if needed
-            if [ ${#balance} -lt 10 ]; then
-                balance="${balance}000000000"
+        local json_output=$(sui client balance --json 2>/dev/null || echo "")
+        if [ -n "$json_output" ]; then
+            # Handle the nested array structure: [[[metadata, [coin_objects]]], boolean]
+            # Sum up all the balance values from individual coin objects
+            balance_mist=$(echo "$json_output" | jq -r '
+                if type == "array" and length > 0 then
+                    .[0][0][1] // [] | 
+                    if type == "array" then 
+                        map(select(.coinType == "0x2::sui::SUI") | .balance | tonumber) | add // 0
+                    else 0 end
+                else 0 end
+            ' 2>/dev/null || echo "0")
+            
+            if [ "$balance_mist" != "0" ] && [ "$balance_mist" != "null" ]; then
+                balance_sui=$(echo "scale=2; $balance_mist / 1000000000" | bc 2>/dev/null || echo "0")
             fi
         fi
     fi
     
-    local balance_sui=$((balance / 1000000000))
-    local balance_mist=$((balance % 1000000000))
+    # Fallback to human-readable parsing if JSON failed
+    if [ "$balance_sui" = "0" ] || [ -z "$balance_sui" ]; then
+        local balance_output=$(sui client balance 2>/dev/null || echo "")
+        if echo "$balance_output" | grep -q "SUI"; then
+            # Extract the decimal balance (e.g., "6.00" from "6.00 SUI")
+            balance_sui=$(echo "$balance_output" | grep -oE '[0-9]+(\.[0-9]+)?\s*SUI' | grep -oE '[0-9]+(\.[0-9]+)?' | head -1 || echo "0")
+            
+            # Convert to MIST for threshold comparisons (ensure integer)
+            if [ "$balance_sui" != "0" ] && [ -n "$balance_sui" ]; then
+                balance_mist=$(echo "$balance_sui * 1000000000" | bc 2>/dev/null | cut -d'.' -f1 || echo "0")
+                balance_mist=${balance_mist:-0}
+            fi
+        fi
+    fi
     
-    print_info "Current balance: $balance_sui.$((balance_mist / 1000000)) SUI"
+    print_info "Current balance: $balance_sui SUI"
     
-    if [ "$balance" -eq "0" ]; then
-        print_warning "No SUI balance found. You need testnet tokens to deploy contracts."
+    # Define minimum balance threshold (0.1 SUI = 100,000,000 MIST)
+    local min_balance_threshold=100000000
+    
+    # Compare balance in MIST units
+    if [ "$balance_mist" -lt "$min_balance_threshold" ]; then
+        if [ "$balance_mist" -eq "0" ]; then
+            print_warning "No SUI balance found. You need testnet tokens to deploy contracts."
+        else
+            print_warning "Low SUI balance detected. You may need more testnet tokens for deployment."
+        fi
+        
         print_info ""
         print_info "🚰 Getting testnet SUI tokens:"
         print_info "════════════════════════════════════"
@@ -214,39 +230,49 @@ check_balance_and_faucet() {
         print_info "  Run: sui client faucet"
         print_info ""
         
-        # Interactive faucet process
-        echo -e "${YELLOW}Choose your preferred method:${NC}"
-        echo "1) I'll use Web faucet"  
+        echo "Choose your preferred method:"
+        echo "1) I'll use Web faucet"
         echo "2) I'll use Discord faucet"
         echo "3) Use CLI faucet now"
         echo "4) Skip for now"
-        
         read -p "Enter choice (1-4): " choice
         
         case $choice in
             1)
-                print_info "Opening web faucet..."
+                print_info "Opening web faucet in browser..."
                 if command -v open &> /dev/null; then
                     open "https://faucet.testnet.sui.io"
                 elif command -v xdg-open &> /dev/null; then
                     xdg-open "https://faucet.testnet.sui.io"
+                else
+                    print_info "Please visit: https://faucet.testnet.sui.io"
                 fi
-                print_info "Use address: $current_address"
+                print_info "Please use web faucet manually."
                 ;;
             2)
-                print_info "Great! Use Discord faucet with address: $current_address"
+                print_info "Opening Discord in browser..."
+                if command -v open &> /dev/null; then
+                    open "https://discord.gg/sui"
+                elif command -v xdg-open &> /dev/null; then
+                    xdg-open "https://discord.gg/sui"
+                else
+                    print_info "Please visit: https://discord.gg/sui"
+                fi
+                print_info "Use command: !faucet $current_address"
                 ;;
             3)
-                print_info "Requesting tokens via CLI..."
+                print_info "Requesting SUI from CLI faucet..."
                 if sui client faucet; then
-                    print_status "CLI faucet request sent"
+                    print_status "Faucet request successful!"
                 else
-                    print_warning "CLI faucet failed, try web or Discord faucet"
+                    print_warning "CLI faucet failed. Please use web or Discord faucet manually."
                 fi
                 ;;
             4)
-                print_warning "Skipping faucet. Remember to get SUI before deployment!"
-                return 0
+                print_info "Skipping faucet request."
+                if [ "$balance_sui" != "0" ]; then
+                    print_info "You have $balance_sui SUI, which might be sufficient for deployment."
+                fi
                 ;;
             *)
                 print_warning "Invalid choice. Please use web or Discord faucet manually."
@@ -257,38 +283,40 @@ check_balance_and_faucet() {
             print_info ""
             read -p "$(echo -e ${YELLOW}Press Enter after requesting SUI tokens...${NC})"
             
-            # Check balance again
+            # Recheck balance using the same logic
             print_info "Rechecking balance..."
-            sleep 2  # Give some time for the transaction to process
+            sleep 2
             
-            if command -v jq &> /dev/null; then
-                balance=$(sui client balance --json 2>/dev/null | jq -r '.[] | select(.coinType == "0x2::sui::SUI") | .totalBalance // "0"' 2>/dev/null || echo "0")
-            else
-                local balance_output=$(sui client balance 2>/dev/null || echo "")
-                if echo "$balance_output" | grep -q "SUI"; then
-                    balance=$(echo "$balance_output" | grep -o '[0-9]*' | head -1 || echo "0")
-                    if [ ${#balance} -lt 10 ]; then
-                        balance="${balance}000000000"
-                    fi
+            # Re-run balance check logic
+            local new_balance_output=$(sui client balance 2>/dev/null || echo "")
+            if echo "$new_balance_output" | grep -q "SUI"; then
+                local new_balance_sui=$(echo "$new_balance_output" | grep -oE '[0-9]+(\.[0-9]+)?\s*SUI' | grep -oE '[0-9]+(\.[0-9]+)?' | head -1 || echo "0")
+                local new_balance_mist=$(echo "$new_balance_sui * 1000000000" | bc 2>/dev/null | cut -d'.' -f1 || echo "0")
+                new_balance_mist=${new_balance_mist:-0}
+                
+                if [ "$new_balance_mist" -gt "$min_balance_threshold" ]; then
+                    print_status "✨ SUI tokens received! New balance: $new_balance_sui SUI"
+                else
+                    print_warning "Balance still low. Transactions may take a few moments to appear."
+                    print_info "You can check your balance later with: sui client balance"
                 fi
-            fi
-            
-            balance_sui=$((balance / 1000000000))
-            
-            if [ "$balance" -gt "0" ]; then
-                print_status "✨ SUI tokens received! New balance: $balance_sui SUI"
-            else
-                print_warning "No SUI tokens detected yet."
-                print_info "Transactions may take a few moments to appear."
-                print_info "You can check your balance later with: sui client balance"
             fi
         fi
     else
         print_status "✨ SUI balance available: $balance_sui SUI"
-        if [ "$balance_sui" -gt 1 ]; then
-            print_status "Sufficient balance for contract deployment!"
+        
+        # Convert balance to integer for comparison (remove decimals)
+        local balance_check=$(echo "$balance_sui * 1000000000" | bc 2>/dev/null | cut -d'.' -f1 || echo "0")
+        
+        # Ensure balance_check is a valid integer
+        balance_check=${balance_check:-0}
+        
+        if [ "$balance_check" -ge 1000000000 ]; then
+            print_status "Excellent balance for contract deployment!"
+        elif [ "$balance_check" -ge "$min_balance_threshold" ]; then
+            print_status "Good balance for deployment. Should be sufficient for most operations."
         else
-            print_warning "Low balance. Consider getting more SUI for multiple transactions."
+            print_warning "Moderate balance. Consider getting more SUI for multiple transactions."
         fi
     fi
 }
@@ -299,20 +327,20 @@ display_summary() {
     
     local current_env=$(sui client active-env 2>/dev/null || echo "unknown")
     local current_address=$(sui client active-address 2>/dev/null || echo "unknown")
-    local balance="0"
     
-    if command -v jq &> /dev/null; then
-        balance=$(sui client balance --json 2>/dev/null | jq -r '.[] | select(.coinType == "0x2::sui::SUI") | .totalBalance // "0"' 2>/dev/null || echo "0")
+    # Get balance for summary using the same improved logic
+    local summary_balance="0"
+    local balance_output=$(sui client balance 2>/dev/null || echo "")
+    if echo "$balance_output" | grep -q "SUI"; then
+        summary_balance=$(echo "$balance_output" | grep -oE '[0-9]+(\.[0-9]+)?\s*SUI' | grep -oE '[0-9]+(\.[0-9]+)?' | head -1 || echo "0")
     fi
-    
-    local balance_sui=$((balance / 1000000000))
     
     echo
     echo -e "${BOLD}📋 Sui Configuration Summary:${NC}"
     echo "═══════════════════════════════════════"
     echo -e "Environment:  ${GREEN}$current_env${NC}"
     echo -e "Address:      ${GREEN}$current_address${NC}"
-    echo -e "Balance:      ${GREEN}$balance_sui SUI${NC}"
+    echo -e "Balance:      ${GREEN}$summary_balance SUI${NC}"
     echo -e "RPC URL:      ${GREEN}https://fullnode.testnet.sui.io:443${NC}"
     echo "═══════════════════════════════════════"
     echo

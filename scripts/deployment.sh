@@ -124,15 +124,54 @@ setup_sui() {
     print_info "Active address: $current_address"
     log "Active address: $current_address"
     
-    # Check balance
-    local balance=$(sui client balance --json 2>/dev/null | jq -r '.[] | select(.coinType == "0x2::sui::SUI") | .totalBalance // "0"' 2>/dev/null || echo "0")
-    local balance_sui=$((balance / 1000000000))
+    # Check balance with improved parsing
+    local balance_sui="0"
+    local balance_mist="0"
+    
+    # Try JSON parsing first (with fixed structure handling)
+    if command -v jq &> /dev/null; then
+        local json_output=$(sui client balance --json 2>/dev/null || echo "")
+        if [ -n "$json_output" ]; then
+            # Handle the nested array structure: [[[metadata, [coin_objects]]], boolean]
+            balance_mist=$(echo "$json_output" | jq -r '
+                if type == "array" and length > 0 then
+                    .[0][0][1] // [] | 
+                    if type == "array" then 
+                        map(select(.coinType == "0x2::sui::SUI") | .balance | tonumber) | add // 0
+                    else 0 end
+                else 0 end
+            ' 2>/dev/null || echo "0")
+            
+            if [ "$balance_mist" != "0" ] && [ "$balance_mist" != "null" ]; then
+                balance_sui=$(echo "scale=2; $balance_mist / 1000000000" | bc 2>/dev/null || echo "0")
+            fi
+        fi
+    fi
+    
+    # Fallback to human-readable parsing if JSON failed
+    if [ "$balance_sui" = "0" ] || [ -z "$balance_sui" ]; then
+        local balance_output=$(sui client balance 2>/dev/null || echo "")
+        if echo "$balance_output" | grep -q "SUI"; then
+            # Extract the decimal balance (e.g., "6.00" from "6.00 SUI")
+            balance_sui=$(echo "$balance_output" | grep -oE '[0-9]+(\.[0-9]+)?\s*SUI' | grep -oE '[0-9]+(\.[0-9]+)?' | head -1 || echo "0")
+            
+            # Convert to MIST for threshold comparisons
+            if [ "$balance_sui" != "0" ] && [ -n "$balance_sui" ]; then
+                balance_mist=$(echo "$balance_sui * 1000000000" | bc 2>/dev/null | cut -d'.' -f1 || echo "0")
+                balance_mist=${balance_mist:-0}
+            fi
+        fi
+    fi
+    
     print_info "Current SUI balance: $balance_sui SUI"
     log "Current balance: $balance_sui SUI"
     
-    if [ "$balance" -lt "1000000000" ]; then
+    # Check if balance is sufficient (minimum 0.1 SUI)
+    local min_balance_threshold=100000000
+    
+    if [ "$balance_mist" -lt "$min_balance_threshold" ]; then
         print_warning "Low SUI balance detected ($balance_sui SUI)"
-        print_info "You may need testnet SUI for deployment."
+        print_info "You may need more testnet SUI for deployment."
         print_info "Get testnet SUI from: https://faucet.testnet.sui.io"
         print_info "Or use Discord faucet: https://discord.gg/sui (#testnet-faucet channel)"
         
@@ -261,12 +300,39 @@ deploy_contracts() {
     
     cd "$CONTRACT_DIR"
     
-    # Get current address and balance
+    # Get current address and balance using improved parsing
     local current_address=$(sui client active-address)
-    local balance=$(sui client balance --json 2>/dev/null | jq -r '.[] | select(.coinType == "0x2::sui::SUI") | .totalBalance // "0"' 2>/dev/null || echo "0")
+    local balance_mist="0"
+    
+    # Use the same improved balance parsing as in setup_sui
+    if command -v jq &> /dev/null; then
+        local json_output=$(sui client balance --json 2>/dev/null || echo "")
+        if [ -n "$json_output" ]; then
+            balance_mist=$(echo "$json_output" | jq -r '
+                if type == "array" and length > 0 then
+                    .[0][0][1] // [] | 
+                    if type == "array" then 
+                        map(select(.coinType == "0x2::sui::SUI") | .balance | tonumber) | add // 0
+                    else 0 end
+                else 0 end
+            ' 2>/dev/null || echo "0")
+        fi
+    fi
+    
+    # Fallback parsing if JSON failed
+    if [ "$balance_mist" = "0" ] || [ -z "$balance_mist" ]; then
+        local balance_output=$(sui client balance 2>/dev/null || echo "")
+        if echo "$balance_output" | grep -q "SUI"; then
+            local balance_sui=$(echo "$balance_output" | grep -oE '[0-9]+(\.[0-9]+)?\s*SUI' | grep -oE '[0-9]+(\.[0-9]+)?' | head -1 || echo "0")
+            if [ "$balance_sui" != "0" ] && [ -n "$balance_sui" ]; then
+                balance_mist=$(echo "$balance_sui * 1000000000" | bc 2>/dev/null | cut -d'.' -f1 || echo "0")
+                balance_mist=${balance_mist:-0}
+            fi
+        fi
+    fi
     
     # Calculate gas budget (conservative approach)
-    local gas_budget=$((balance / 20)) # Use 5% of balance
+    local gas_budget=$((balance_mist / 20)) # Use 5% of balance
     if [ "$gas_budget" -gt 2000000000 ]; then
         gas_budget=2000000000 # Cap at 2 SUI
     fi

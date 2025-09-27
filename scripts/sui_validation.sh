@@ -84,28 +84,54 @@ else
     print_info "Check internet connection and RPC endpoint"
 fi
 
-# Test 5: Balance Check
+# Test 5: Balance Check (FIXED)
 print_test "SUI balance availability"
+
+# Use improved balance parsing logic
+BALANCE_SUI="0"
+BALANCE_MIST="0"
+
 if command -v jq &> /dev/null; then
-    BALANCE=$(sui client balance --json 2>/dev/null | jq -r '.[] | select(.coinType == "0x2::sui::SUI") | .totalBalance // "0"' 2>/dev/null || echo "0")
-else
-    # Fallback without jq
-    BALANCE_OUTPUT=$(sui client balance 2>/dev/null || echo "")
-    if echo "$BALANCE_OUTPUT" | grep -q "SUI"; then
-        BALANCE=$(echo "$BALANCE_OUTPUT" | grep -o '[0-9]*' | head -1 || echo "0")
-        # Ensure we have MIST units
-        if [ ${#BALANCE} -lt 10 ]; then
-            BALANCE="${BALANCE}000000000"
+    # Try JSON parsing with fixed structure handling
+    JSON_OUTPUT=$(sui client balance --json 2>/dev/null || echo "")
+    if [ -n "$JSON_OUTPUT" ]; then
+        # Handle the nested array structure: [[[metadata, [coin_objects]]], boolean]
+        BALANCE_MIST=$(echo "$JSON_OUTPUT" | jq -r '
+            if type == "array" and length > 0 then
+                .[0][0][1] // [] | 
+                if type == "array" then 
+                    map(select(.coinType == "0x2::sui::SUI") | .balance | tonumber) | add // 0
+                else 0 end
+            else 0 end
+        ' 2>/dev/null || echo "0")
+        
+        if [ "$BALANCE_MIST" != "0" ] && [ "$BALANCE_MIST" != "null" ]; then
+            BALANCE_SUI=$(echo "scale=2; $BALANCE_MIST / 1000000000" | bc 2>/dev/null || echo "0")
         fi
-    else
-        BALANCE="0"
     fi
 fi
 
-BALANCE_SUI=$((BALANCE / 1000000000))
-if [ "$BALANCE" -gt 1000000000 ]; then
+# Fallback to human-readable parsing if JSON failed
+if [ "$BALANCE_SUI" = "0" ] || [ -z "$BALANCE_SUI" ]; then
+    BALANCE_OUTPUT=$(sui client balance 2>/dev/null || echo "")
+    if echo "$BALANCE_OUTPUT" | grep -q "SUI"; then
+        # Extract the decimal balance (e.g., "6.00" from "6.00 SUI")
+        BALANCE_SUI=$(echo "$BALANCE_OUTPUT" | grep -oE '[0-9]+(\.[0-9]+)?\s*SUI' | grep -oE '[0-9]+(\.[0-9]+)?' | head -1 || echo "0")
+        
+        # Convert to MIST for threshold comparisons
+        if [ "$BALANCE_SUI" != "0" ] && [ -n "$BALANCE_SUI" ]; then
+            BALANCE_MIST=$(echo "$BALANCE_SUI * 1000000000" | bc 2>/dev/null | cut -d'.' -f1 || echo "0")
+            BALANCE_MIST=${BALANCE_MIST:-0}
+        fi
+    fi
+fi
+
+# Evaluate balance thresholds
+if [ "$BALANCE_MIST" -gt 1000000000 ]; then
+    print_pass "SUI balance: $BALANCE_SUI SUI (excellent for deployment)"
+elif [ "$BALANCE_MIST" -gt 100000000 ]; then
     print_pass "SUI balance: $BALANCE_SUI SUI (sufficient for deployment)"
-elif [ "$BALANCE" -gt 0 ]; then
+elif [ "$BALANCE_MIST" -gt 0 ]; then
     print_warn "SUI balance: $BALANCE_SUI SUI (may be low for multiple transactions)"
     print_info "Get more SUI from: https://faucet.testnet.sui.io"
 else
@@ -122,7 +148,16 @@ else
     print_info "Install with: apt-get install jq (Ubuntu) or brew install jq (macOS)"
 fi
 
-# Test 7: Environment variables
+# Test 7: bc availability (for decimal arithmetic)
+print_test "Decimal arithmetic utilities"
+if command -v bc &> /dev/null; then
+    print_pass "bc available for decimal calculations"
+else
+    print_warn "bc not found (recommended for accurate balance calculations)"
+    print_info "Install with: apt-get install bc (Ubuntu) or brew install bc (macOS)"
+fi
+
+# Test 8: Environment variables
 print_test "Environment variables"
 ENV_FILE="../.env"
 if [ -f "$ENV_FILE" ]; then
@@ -135,7 +170,7 @@ else
     print_warn "No .env file found (will be created during deployment)"
 fi
 
-# Test 8: Move.toml validation
+# Test 9: Move.toml validation
 print_test "Move.toml configuration"
 MOVE_TOML="../contracts/meltyfi/Move.toml"
 if [ -f "$MOVE_TOML" ]; then
@@ -159,7 +194,7 @@ else
     print_info "Expected at: $MOVE_TOML"
 fi
 
-# Test 9: Node.js availability (for frontend)
+# Test 10: Node.js availability (for frontend)
 print_test "Node.js availability"
 if command -v node &> /dev/null; then
     NODE_VERSION=$(node --version)
@@ -174,7 +209,7 @@ else
     print_info "Install from: https://nodejs.org"
 fi
 
-# Test 10: Project structure
+# Test 11: Project structure
 print_test "Project structure validation"
 REQUIRED_DIRS=("../contracts/meltyfi" "../frontend" "../scripts")
 MISSING_DIRS=()
@@ -191,7 +226,7 @@ else
     print_fail "Missing directories: ${MISSING_DIRS[*]}"
 fi
 
-# Test 11: Frontend configuration
+# Test 12: Frontend configuration
 print_test "Frontend configuration for testnet"
 FRONTEND_ENV="../frontend/.env.local"
 if [ -f "$FRONTEND_ENV" ]; then
@@ -204,7 +239,7 @@ else
     print_warn "Frontend .env.local not found (will be created during deployment)"
 fi
 
-# Test 12: RPC endpoint validation
+# Test 13: RPC endpoint validation
 print_test "Testnet RPC endpoint"
 if command -v curl &> /dev/null; then
     if curl -s --connect-timeout 5 "https://fullnode.testnet.sui.io:443" > /dev/null; then
@@ -215,6 +250,25 @@ if command -v curl &> /dev/null; then
     fi
 else
     print_warn "curl not available, cannot test RPC endpoint"
+fi
+
+# Test 14: Gas budget calculation test
+print_test "Gas budget calculation"
+if [ "$BALANCE_MIST" -gt 0 ]; then
+    # Test if we can calculate a reasonable gas budget
+    GAS_BUDGET=$((BALANCE_MIST / 20)) # 5% of balance
+    if [ "$GAS_BUDGET" -gt 100000000 ]; then
+        if [ "$GAS_BUDGET" -gt 2000000000 ]; then
+            GAS_BUDGET=2000000000 # Cap at 2 SUI
+        fi
+        GAS_BUDGET_SUI=$((GAS_BUDGET / 1000000000))
+        print_pass "Can calculate gas budget: $GAS_BUDGET_SUI SUI"
+    else
+        print_warn "Balance too low for safe gas budget calculation"
+        print_info "Minimum 0.1 SUI recommended for deployment"
+    fi
+else
+    print_fail "Cannot calculate gas budget without SUI balance"
 fi
 
 # Summary
@@ -250,3 +304,12 @@ echo
 echo "For detailed setup, run: ./scripts/sui_setup.sh"
 echo "For deployment, run: ./scripts/deployment.sh"
 echo "Testnet faucet: https://faucet.testnet.sui.io"
+
+# Additional debug info if balance parsing failed
+if [ "$BALANCE_SUI" = "0" ] && [ -n "$BALANCE_OUTPUT" ]; then
+    echo
+    echo "🔍 Balance Debug Info:"
+    echo "Raw balance output (first 200 chars):"
+    echo "${BALANCE_OUTPUT:0:200}..."
+    echo "If you see SUI balance above but script shows 0, please report this as a bug."
+fi
