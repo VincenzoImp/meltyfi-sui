@@ -1,7 +1,7 @@
 /// Main entry point and module organization for MeltyFi Protocol
 module meltyfi::meltyfi {
-    use meltyfi::meltyfi_core::{Protocol, Lottery, AdminCap, LotteryReceipt};
-    use meltyfi::choco_chip::{ChocolateFactory, FactoryAdmin, CHOCO_CHIP};
+    use meltyfi::meltyfi_core::{Protocol, Lottery, LotteryReceipt};
+    use meltyfi::choco_chip::{ChocolateFactory, CHOCO_CHIP};
     use meltyfi::wonka_bars::WonkaBars;
 
     // ======== Protocol Constants ========

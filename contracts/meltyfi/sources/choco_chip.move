@@ -1,11 +1,9 @@
 /// ChocoChip - Governance token for MeltyFi Protocol
 module meltyfi::choco_chip {
     use sui::coin::{Self, Coin, TreasuryCap};
-    use sui::tx_context::{Self, TxContext};
+    use sui::tx_context::TxContext;
     use sui::url;
     use sui::event;
-    use sui::transfer;
-    use sui::object;
 
     // ======== Error Codes ========
     const ENotAuthorized: u64 = 1;
@@ -22,6 +20,15 @@ module meltyfi::choco_chip {
 
     public struct ChocolateFactory has key {
         id: sui::object::UID,
+        treasury_cap: TreasuryCap<CHOCO_CHIP>,
+        total_supply: u64,
+        authorized_minters: vector<address>,
+        max_supply: u64,
+    }
+
+    public struct FactoryAdmin has key, store {
+        id: sui::object::UID,
+    }
         treasury_cap: TreasuryCap<CHOCO_CHIP>,
         total_supply: u64,
         authorized_minters: vector<address>,

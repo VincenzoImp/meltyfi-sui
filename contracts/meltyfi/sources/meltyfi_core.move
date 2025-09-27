@@ -1,7 +1,7 @@
 /// MeltyFi Protocol - Core protocol for NFT-collateralized lending through lottery mechanics
 module meltyfi::meltyfi_core {
-    use sui::object::{Self, UID, ID};
-    use sui::tx_context::{Self, TxContext};
+    use sui::object::{UID, ID};
+    use sui::tx_context::TxContext;
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
     use sui::clock::{Self, Clock};
@@ -10,7 +10,6 @@ module meltyfi::meltyfi_core {
     use sui::table::{Self, Table};
     use sui::dynamic_object_field as dof;
     use sui::random::{Self, Random};
-    use sui::transfer;
     
     use meltyfi::choco_chip::{Self, ChocolateFactory, CHOCO_CHIP};
     use meltyfi::wonka_bars::{Self, WonkaBars};
@@ -87,7 +86,7 @@ module meltyfi::meltyfi_core {
     }
 
     /// Ticket range for participants
-    public struct TicketRange has store {
+    public struct TicketRange has store, drop {
         start: u64,
         end: u64,
     }
@@ -140,10 +139,10 @@ module meltyfi::meltyfi_core {
     // ======== Initialization ========
 
     fun init(ctx: &mut TxContext) {
-        let admin = tx_context::sender(ctx);
+        let admin = sui::tx_context::sender(ctx);
         
         let protocol = Protocol {
-            id: object::new(ctx),
+            id: sui::object::new(ctx),
             admin,
             total_lotteries: 0,
             treasury: balance::zero<SUI>(),
@@ -152,11 +151,11 @@ module meltyfi::meltyfi_core {
         };
 
         let admin_cap = AdminCap {
-            id: object::new(ctx),
+            id: sui::object::new(ctx),
         };
 
-        transfer::share_object(protocol);
-        transfer::transfer(admin_cap, admin);
+        sui::transfer::share_object(protocol);
+        sui::transfer::transfer(admin_cap, admin);
     }
 
     // ======== Public Functions ========
@@ -184,8 +183,8 @@ module meltyfi::meltyfi_core {
         let protocol_fee = (max_earnings * PROTOCOL_FEE_BPS) / BASIS_POINTS;
         let initial_payout = max_earnings - protocol_fee;
 
-        let lottery = Lottery {
-            id: object::new(ctx),
+        let mut lottery = Lottery {
+            id: sui::object::new(ctx),
             lottery_id,
             owner: tx_context::sender(ctx),
             state: LOTTERY_ACTIVE,
@@ -205,28 +204,27 @@ module meltyfi::meltyfi_core {
         // Store the NFT as a dynamic field
         dof::add(&mut lottery.id, b"nft", nft);
 
-        let lottery_id_copy = lottery.lottery_id;
         let lottery_obj_id = object::id(&lottery);
         
         std::vector::push_back(&mut protocol.active_lotteries, lottery_obj_id);
 
         // Create receipt for the lottery owner
         let receipt = LotteryReceipt {
-            id: object::new(ctx),
+            id: sui::object::new(ctx),
             lottery_id,
-            owner: tx_context::sender(ctx),
+            owner: sui::tx_context::sender(ctx),
         };
 
         event::emit(LotteryCreated {
             lottery_id,
-            owner: tx_context::sender(ctx),
+            owner: sui::tx_context::sender(ctx),
             expiration_date,
             wonkabar_price,
             max_supply,
             initial_payout,
         });
 
-        transfer::share_object(lottery);
+        sui::transfer::share_object(lottery);
         receipt
     }
 
@@ -248,17 +246,17 @@ module meltyfi::meltyfi_core {
         let total_cost = lottery.wonkabar_price * quantity;
         assert!(coin::value(&payment) >= total_cost, EInsufficientPayment);
 
-        let buyer = tx_context::sender(ctx);
+        let buyer = sui::tx_context::sender(ctx);
         
         // Handle payment
-        let payment_balance = coin::into_balance(payment);
+        let mut payment_balance = coin::into_balance(payment);
         let cost_balance = balance::split(&mut payment_balance, total_cost);
         balance::join(&mut lottery.funds, cost_balance);
         
         // Return excess payment if any
         if (balance::value(&payment_balance) > 0) {
             let excess_coin = coin::from_balance(payment_balance, ctx);
-            transfer::public_transfer(excess_coin, buyer);
+            sui::transfer::public_transfer(excess_coin, buyer);
         } else {
             balance::destroy_zero(payment_balance);
         };
@@ -283,7 +281,7 @@ module meltyfi::meltyfi_core {
         if (table::contains(&lottery.ticket_ranges, buyer)) {
             // For simplicity, we'll overwrite the range. In a full implementation,
             // you'd want to track multiple ranges per user
-            table::remove(&mut lottery.ticket_ranges, buyer);
+            let _old_range = table::remove(&mut lottery.ticket_ranges, buyer);
         };
         
         table::add(&mut lottery.ticket_ranges, buyer, TicketRange {
@@ -362,7 +360,7 @@ module meltyfi::meltyfi_core {
 
     /// Redeem WonkaBars after lottery conclusion
     public fun redeem_wonkabars<T: key + store>(
-        protocol: &mut Protocol,
+        _protocol: &mut Protocol,
         lottery: &mut Lottery,
         factory: &mut ChocolateFactory,
         wonka_bars: WonkaBars,
@@ -434,21 +432,21 @@ module meltyfi::meltyfi_core {
         assert!(lottery.state == LOTTERY_ACTIVE, EInvalidLotteryState);
         assert!(clock::timestamp_ms(clock) < lottery.expiration_date, ELotteryExpired);
         assert!(receipt.lottery_id == lottery.lottery_id, ELotteryNotFound);
-        assert!(receipt.owner == tx_context::sender(ctx), ENotAuthorized);
+        assert!(receipt.owner == sui::tx_context::sender(ctx), ENotAuthorized);
 
         // Calculate repayment amount (total potential earnings)
         let total_repayment = lottery.wonkabar_price * lottery.max_supply;
         assert!(coin::value(&repayment) >= total_repayment, EInsufficientPayment);
 
         // Handle repayment
-        let repayment_balance = coin::into_balance(repayment);
+        let mut repayment_balance = coin::into_balance(repayment);
         let required_balance = balance::split(&mut repayment_balance, total_repayment);
         balance::join(&mut protocol.treasury, required_balance);
 
         // Return excess payment if any
         if (balance::value(&repayment_balance) > 0) {
             let excess_coin = coin::from_balance(repayment_balance, ctx);
-            transfer::public_transfer(excess_coin, tx_context::sender(ctx));
+            sui::transfer::public_transfer(excess_coin, sui::tx_context::sender(ctx));
         } else {
             balance::destroy_zero(repayment_balance);
         };
@@ -468,7 +466,7 @@ module meltyfi::meltyfi_core {
 
         // Clean up receipt
         let LotteryReceipt { id, lottery_id: _, owner: _ } = receipt;
-        object::delete(id);
+        sui::object::delete(id);
 
         event::emit(LotteryCancelled {
             lottery_id: lottery.lottery_id,
@@ -536,7 +534,7 @@ module meltyfi::meltyfi_core {
         
         event::emit(ProtocolPaused {
             paused,
-            admin: tx_context::sender(ctx),
+            admin: sui::tx_context::sender(ctx),
         });
     }
 

@@ -1,9 +1,8 @@
 /// WonkaBars - Lottery ticket NFTs for MeltyFi Protocol
 module meltyfi::wonka_bars {
-    use sui::object::{Self, UID};
-    use sui::tx_context::{Self, TxContext};
+    use sui::object::UID;
+    use sui::tx_context::TxContext;
     use sui::event;
-    use sui::transfer;
 
     // ======== Error Codes ========
     const EInvalidQuantity: u64 = 1;
@@ -71,15 +70,15 @@ module meltyfi::wonka_bars {
     // ======== Public Functions ========
 
     /// Create metadata strings for WonkaBars
-    fun create_name(lottery_id: u64, quantity: u64): std::string::String {
+    fun create_name(_lottery_id: u64, _quantity: u64): std::string::String {
         std::string::utf8(b"MeltyFi WonkaBars #")
     }
 
-    fun create_description(lottery_id: u64): std::string::String {
+    fun create_description(_lottery_id: u64): std::string::String {
         std::string::utf8(b"Official lottery tickets for MeltyFi Protocol")
     }
 
-    fun create_image_url(lottery_id: u64): std::string::String {
+    fun create_image_url(_lottery_id: u64): std::string::String {
         std::string::utf8(b"https://meltyfi.nft/images/wonka-bars.png")
     }
 
@@ -97,7 +96,7 @@ module meltyfi::wonka_bars {
         assert!(ticket_end - ticket_start + 1 == quantity, EInvalidQuantity);
 
         let wonka_bars = WonkaBars {
-            id: object::new(ctx),
+            id: sui::object::new(ctx),
             lottery_id,
             quantity,
             owner,
@@ -106,11 +105,11 @@ module meltyfi::wonka_bars {
             image_url: create_image_url(lottery_id),
             ticket_start,
             ticket_end,
-            created_at: tx_context::epoch_timestamp_ms(ctx),
+            created_at: sui::tx_context::epoch_timestamp_ms(ctx),
         };
 
         event::emit(WonkaBarsCreated {
-            id: object::id(&wonka_bars),
+            id: sui::object::id(&wonka_bars),
             lottery_id,
             quantity,
             owner,
@@ -140,7 +139,7 @@ module meltyfi::wonka_bars {
         assert!(split_quantity > 0, EInvalidQuantity);
         assert!(split_quantity < wonka_bars.quantity, EInsufficientQuantity);
 
-        let original_id = object::id(wonka_bars);
+        let original_id = sui::object::id(wonka_bars);
         let remaining_quantity = wonka_bars.quantity - split_quantity;
 
         // Update original WonkaBars
@@ -149,7 +148,7 @@ module meltyfi::wonka_bars {
 
         // Create new WonkaBars for split portion
         let new_wonka_bars = WonkaBars {
-            id: object::new(ctx),
+            id: sui::object::new(ctx),
             lottery_id: wonka_bars.lottery_id,
             quantity: split_quantity,
             owner: wonka_bars.owner,
@@ -163,7 +162,7 @@ module meltyfi::wonka_bars {
 
         event::emit(WonkaBarsSplit {
             original_id,
-            new_id: object::id(&new_wonka_bars),
+            new_id: sui::object::id(&new_wonka_bars),
             lottery_id: wonka_bars.lottery_id,
             split_quantity,
             remaining_quantity,
@@ -180,7 +179,7 @@ module meltyfi::wonka_bars {
         assert!(wonka_bars1.lottery_id == wonka_bars2.lottery_id, EIncompatibleWonkaBars);
         assert!(wonka_bars1.owner == wonka_bars2.owner, EIncompatibleWonkaBars);
 
-        let id2 = object::id(&wonka_bars2);
+        let id2 = sui::object::id(&wonka_bars2);
         let quantity2 = wonka_bars2.quantity;
 
         // Update first WonkaBars
@@ -188,7 +187,7 @@ module meltyfi::wonka_bars {
         wonka_bars1.ticket_end = wonka_bars1.ticket_end + quantity2;
 
         event::emit(WonkaBarsMerged {
-            id1: object::id(wonka_bars1),
+            id1: sui::object::id(wonka_bars1),
             id2,
             lottery_id: wonka_bars1.lottery_id,
             total_quantity: wonka_bars1.quantity,
@@ -207,7 +206,7 @@ module meltyfi::wonka_bars {
             ticket_end: _, 
             created_at: _ 
         } = wonka_bars2;
-        object::delete(id);
+        sui::object::delete(id);
     }
 
     /// Transfer WonkaBars to new owner
@@ -216,7 +215,7 @@ module meltyfi::wonka_bars {
         wonka_bars.owner = new_owner;
 
         event::emit(WonkaBarsTransferred {
-            id: object::id(wonka_bars),
+            id: sui::object::id(wonka_bars),
             from: old_owner,
             to: new_owner,
             lottery_id: wonka_bars.lottery_id,
@@ -226,7 +225,7 @@ module meltyfi::wonka_bars {
 
     /// Burn WonkaBars (destroy them)
     public fun burn(wonka_bars: WonkaBars) {
-        let id = object::id(&wonka_bars);
+        let id = sui::object::id(&wonka_bars);
         let lottery_id = wonka_bars.lottery_id;
         let quantity = wonka_bars.quantity;
         let owner = wonka_bars.owner;
@@ -250,7 +249,7 @@ module meltyfi::wonka_bars {
             ticket_end: _, 
             created_at: _ 
         } = wonka_bars;
-        object::delete(id);
+        sui::object::delete(id);
     }
 
     // ======== View Functions ========
