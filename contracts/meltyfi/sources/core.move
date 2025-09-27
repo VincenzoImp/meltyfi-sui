@@ -418,15 +418,34 @@ module meltyfi::core {
         protocol: &mut Protocol,
         lottery: &mut Lottery,
         receipt: &LotteryReceipt,
+        repayment: Coin<SUI>,
         ctx: &mut TxContext
     ) {
         assert!(!protocol.paused, EProtocolPaused);
         assert!(lottery.state == LOTTERY_ACTIVE, EInvalidLotteryState);
         assert!(receipt.lottery_id == lottery.lottery_id, EInvalidAmount);
         assert!(receipt.owner == tx_context::sender(ctx), ENotLotteryOwner);
+        let sender = tx_context::sender(ctx);
+
+        // Owner must repay the loan (total_raised) when cancelling before expiration.
+        let payment_amount = coin::value(&repayment);
+        assert!(payment_amount >= lottery.total_raised, EInsufficientPayment);
+
+        let mut payment_balance = coin::into_balance(repayment);
+        let repay_balance = balance::split(&mut payment_balance, lottery.total_raised);
+        // Join the repayment into the lottery funds so participants can claim refunds
+        balance::join(&mut lottery.funds, repay_balance);
+
+        // Return any excess to sender
+        if (balance::value(&payment_balance) > 0) {
+            transfer::public_transfer(coin::from_balance(payment_balance, ctx), sender);
+        } else {
+            balance::destroy_zero(payment_balance);
+        };
+        
 
         lottery.state = LOTTERY_CANCELLED;
-        
+
         // Remove from active lotteries
         vec_map::remove(&mut protocol.active_lotteries, &lottery.lottery_id);
 
