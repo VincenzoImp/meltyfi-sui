@@ -101,12 +101,12 @@ export function useMeltyFi() {
             nftId,
             wonkaBarPrice,
             maxSupply,
-            duration,
+            expirationDate, // Renamed from 'duration' to be more accurate
         }: {
             nftId: string;
             wonkaBarPrice: string;
             maxSupply: string;
-            duration: string;
+            expirationDate: string; // Absolute timestamp as string
         }) => {
             if (!currentAccount?.address) throw new Error('Wallet not connected');
 
@@ -117,15 +117,15 @@ export function useMeltyFi() {
                 arguments: [
                     tx.object(PROTOCOL_OBJECT_ID),
                     tx.object(nftId),
+                    tx.pure.u64(expirationDate), // Convert string to u64 for Move contract
                     tx.pure.u64(wonkaBarPrice),
                     tx.pure.u64(maxSupply),
-                    tx.pure.u64(duration),
+                    tx.object('0x6'), // Clock object
                 ],
             });
 
-            // Changed: use the new API
             const result = await signAndExecuteTransaction({
-                transaction: tx, // Changed from transactionBlock
+                transaction: tx,
                 options: {
                     showEffects: true,
                     showObjectChanges: true,
@@ -139,7 +139,7 @@ export function useMeltyFi() {
             toast.success('Lottery created successfully!');
         },
         onError: (error) => {
-            console.error('Error creating lottery:', error);
+            console.error('Failed to create lottery:', error);
             toast.error('Failed to create lottery');
         },
     });

@@ -17,7 +17,7 @@ import {
 import Link from 'next/link';
 
 function StatsSection() {
-  const { lotteries, userStats, lotteriesLoading } = useMeltyFi();
+  const { lotteries, isLoadingLotteries } = useMeltyFi();
 
   const activeLotteries = lotteries.filter(l => l.state === 'ACTIVE' && Date.now() < l.expirationDate);
   const totalValue = lotteries.reduce((sum, lottery) => {
@@ -33,7 +33,7 @@ function StatsSection() {
           <Trophy className="w-8 h-8 text-white" />
         </div>
         <div className="text-3xl font-bold text-white mb-2">
-          {lotteriesLoading ? '...' : activeLotteries.length}
+          {isLoadingLotteries ? '...' : activeLotteries.length}
         </div>
         <div className="text-white/60">Active Lotteries</div>
       </div>
@@ -43,7 +43,7 @@ function StatsSection() {
           <Coins className="w-8 h-8 text-white" />
         </div>
         <div className="text-3xl font-bold text-white mb-2">
-          {lotteriesLoading ? '...' : `${formatSuiAmount(totalValue, 0)}`}
+          {isLoadingLotteries ? '...' : `${formatSuiAmount(totalValue, 0)}`}
         </div>
         <div className="text-white/60">Total Value (SUI)</div>
       </div>
@@ -53,7 +53,7 @@ function StatsSection() {
           <Users className="w-8 h-8 text-white" />
         </div>
         <div className="text-3xl font-bold text-white mb-2">
-          {lotteriesLoading ? '...' : totalParticipants}
+          {isLoadingLotteries ? '...' : totalParticipants}
         </div>
         <div className="text-white/60">Total Participants</div>
       </div>
@@ -62,14 +62,14 @@ function StatsSection() {
 }
 
 function FeaturedLotteries() {
-  const { lotteries, lotteriesLoading } = useMeltyFi();
+  const { lotteries, isLoadingLotteries } = useMeltyFi();
 
   const featuredLotteries = lotteries
     .filter(l => l.state === 'ACTIVE' && Date.now() < l.expirationDate)
     .sort((a, b) => b.participants - a.participants)
     .slice(0, 3);
 
-  if (lotteriesLoading) {
+  if (isLoadingLotteries) {
     return (
       <div className="text-center py-12">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
