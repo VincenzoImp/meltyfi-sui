@@ -1,14 +1,14 @@
 {
   "network": "testnet",
   "deployer": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
-  "timestamp": "2025-09-27T15:19:57Z",
-  "packageId": "0x48e466fcd71be056a353262f08e62df18cf4961a22fd00351dd0bc8f351f4a6b",
+  "timestamp": "2025-09-27T15:25:56Z",
+  "packageId": "0x4abb8f3549a81f385d3478ed7b6abc4f919dfe348e21f723baab5030031e1a6d",
   "objects": {
-    "adminCap": "0x0d40842c8942362eb2ce0a54e20aaa434385d55a23fb86e444ef8038e21a4186",
-    "protocol": "",
+    "adminCap": "",
+    "protocol": "0x0f2194d19f88b65e94721c1addb273d35fdd8892af2960291a7a3d252566f7b2",
     "chocolateFactory": "",
-    "factoryAdmin": "0x273f1a884e31d265819a4be51274c228fe82944245472321d1a825150eea0b94",
-    "upgradeCap": "0x0bcfb22f81ef19722be19ab6de9a4bb0bb9ef11c7daa51b6908466afd494abb3",
-    "coinMetadata": ""
+    "factoryAdmin": "",
+    "upgradeCap": "",
+    "coinMetadata": "0x03a181a4a0479080bef706260f2cb2550982e9c767926707dc06a3549a0be844"
   }
 }

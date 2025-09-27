@@ -18,7 +18,6 @@
     "start": "npm run dev:frontend",
     "setup:testnet": "./scripts/sui_setup.sh",
     "validate:testnet": "./scripts/sui_validation.sh",
-    "deploy:full": "./scripts/deployment.sh",
     "deploy:auto": "./scripts/auto_deploy.sh",
     "deploy:clean": "./scripts/auto_deploy.sh --clean",
     "deploy:force": "./scripts/auto_deploy.sh --force",
@@ -29,8 +28,9 @@
     "balance": "sui client balance",
     "faucet": "echo 'Get testnet SUI from: https://faucet.testnet.sui.io'",
     "status": "echo '📊 MeltyFi Status:' && echo '├─ Network:' $(sui client active-env 2>/dev/null || echo 'unknown') && echo '├─ Address:' $(sui client active-address 2>/dev/null | head -c 10)... && echo '└─ Balance:' $(sui client balance 2>/dev/null | grep -oE '[0-9]+(\\.\\.[0-9]+)?\\s*SUI' | head -1 || echo 'unknown')",
-    "explorer": "echo 'Open in browser:' && echo '🔍 Sui Explorer: https://suiexplorer.com/?network=testnet' && echo '🚰 Testnet Faucet: https://faucet.testnet.sui.io'",
-    "logs": "tail -f deployment.log 2>/dev/null || echo 'No deployment logs found'"
+    "explorer": "echo 'Open in browser:' && echo '🔍 Sui Explorer: https://suiscan.xyz/testnet/home' && echo '🚰 Testnet Faucet: https://faucet.testnet.sui.io'",
+    "logs": "tail -f deployment.log 2>/dev/null || echo 'No deployment logs found'",
+    "update:deps": "npm update && cd frontend && npm update"
   },
   "repository": {
     "type": "git",
@@ -44,7 +44,9 @@
     "lottery",
     "liquidity",
     "testnet",
-    "automated-deployment"
+    "automated-deployment",
+    "web3",
+    "nextjs"
   ],
   "author": "MeltyFi Team",
   "license": "MIT",

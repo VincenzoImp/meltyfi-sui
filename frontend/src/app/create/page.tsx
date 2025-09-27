@@ -2,7 +2,7 @@
 
 import { useMeltyFi } from '@/hooks/useMeltyFi';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { SuiObjectResponse } from '@mysten/sui.js/client';
+import { SuiObjectResponse } from '@mysten/sui/client';
 import {
     AlertCircle,
     CheckCircle,
