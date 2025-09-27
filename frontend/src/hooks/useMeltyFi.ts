@@ -1,377 +1,388 @@
-// src/hooks/useMeltyFi.ts
 'use client';
 
-import { MELTYFI_PACKAGE_ID, PROTOCOL_OBJECT_ID } from '@/constants/contracts';
-import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit';
-import { Transaction } from '@mysten/sui/transactions';
+import {
+    CHOCOLATE_FACTORY_ID,
+    CHOCO_CHIP_TYPE,
+    DEFAULT_GAS_BUDGET,
+    MELTYFI_PACKAGE_ID,
+    PROTOCOL_OBJECT_ID,
+    WONKA_BAR_TYPE
+} from '@/constants/contracts';
+import {
+    useCurrentAccount,
+    useSignAndExecuteTransactionBlock,
+    useSuiClient
+} from '@mysten/dapp-kit';
+import { SuiObjectResponse } from '@mysten/sui.js/client';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { toast } from 'sonner';
 
-interface CreateLotteryParams {
-    nftId: string;
-    expirationDate: number;
-    wonkabarPrice: number;
-    maxSupply: number;
-}
-
-interface BuyWonkaBarsParams {
+export interface Lottery {
+    id: string;
     lotteryId: string;
-    quantity: number;
-    totalCost: number;
-}
-
-interface LotteryData {
-    id: string;
-    lottery_id: number;
     owner: string;
-    state: number;
+    state: 'ACTIVE' | 'CANCELLED' | 'CONCLUDED';
     expirationDate: number;
-    wonkabarPrice: number;
-    maxSupply: number;
-    soldCount: number;
-    winner?: string; // Optional property
+    wonkaBarPrice: string;
+    maxSupply: string;
+    soldCount: string;
+    winner?: string;
+    collateralNft: {
+        id: string;
+        name: string;
+        imageUrl: string;
+        collection?: string;
+    };
+    totalFunds: string;
+    participants: number;
 }
 
-interface WonkaBarsData {
+export interface WonkaBar {
     id: string;
-    lottery_id: number;
-    quantity: number;
-    owner: string;
+    lotteryId: string;
+    quantity: string;
+    purchasedAt: number;
+}
+
+export interface UserStats {
+    totalLotteries: number;
+    activeLotteries: number;
+    totalWonkaBars: number;
+    chocoChipBalance: string;
+    suiBalance: string;
 }
 
 export function useMeltyFi() {
-    const client = useSuiClient();
     const currentAccount = useCurrentAccount();
-    const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+    const suiClient = useSuiClient();
+    const { mutateAsync: signAndExecute } = useSignAndExecuteTransactionBlock();
     const queryClient = useQueryClient();
-    const [isLoading, setIsLoading] = useState(false);
 
-    // Create lottery mutation
-    const createLotteryMutation = useMutation({
-        mutationFn: async (params: CreateLotteryParams): Promise<any> => {
-            if (!currentAccount) throw new Error('No wallet connected');
+    // Query: Get all active lotteries
+    const { data: lotteries = [], isLoading: lotteriesLoading } = useQuery({
+        queryKey: ['lotteries', PROTOCOL_OBJECT_ID],
+        queryFn: async (): Promise<Lottery[]> => {
+            if (!PROTOCOL_OBJECT_ID) return [];
 
-            return new Promise((resolve, reject) => {
-                setIsLoading(true);
-
-                try {
-                    const tx = new Transaction();
-
-                    tx.moveCall({
-                        target: `${MELTYFI_PACKAGE_ID}::meltyfi_core::create_lottery`,
-                        arguments: [
-                            tx.object(PROTOCOL_OBJECT_ID),
-                            tx.object(params.nftId),
-                            tx.pure.u64(params.expirationDate),
-                            tx.pure.u64(params.wonkabarPrice),
-                            tx.pure.u64(params.maxSupply),
-                            tx.object('0x6'), // Clock
-                        ],
-                        typeArguments: ['0x2::coin::Coin<0x2::sui::SUI>'], // Generic NFT type
-                    });
-
-                    signAndExecuteTransaction(
-                        {
-                            transaction: tx,
-                        },
-                        {
-                            onSuccess: (result) => {
-                                setIsLoading(false);
-                                resolve(result);
-                            },
-                            onError: (error) => {
-                                setIsLoading(false);
-                                reject(error);
-                            }
-                        }
-                    );
-                } catch (error) {
-                    setIsLoading(false);
-                    reject(error);
-                }
-            });
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['lotteries'] });
-            queryClient.invalidateQueries({ queryKey: ['user-lotteries'] });
-        },
-    });
-
-    // Buy WonkaBars mutation
-    const buyWonkaBarsMutation = useMutation({
-        mutationFn: async (params: BuyWonkaBarsParams): Promise<any> => {
-            if (!currentAccount) throw new Error('No wallet connected');
-
-            return new Promise((resolve, reject) => {
-                setIsLoading(true);
-
-                try {
-                    const tx = new Transaction();
-
-                    const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(params.totalCost)]);
-
-                    tx.moveCall({
-                        target: `${MELTYFI_PACKAGE_ID}::meltyfi_core::buy_wonkabars`,
-                        arguments: [
-                            tx.object(PROTOCOL_OBJECT_ID),
-                            tx.object(params.lotteryId),
-                            coin,
-                            tx.pure.u64(params.quantity),
-                            tx.object('0x6'), // Clock
-                        ],
-                    });
-
-                    signAndExecuteTransaction(
-                        {
-                            transaction: tx,
-                        },
-                        {
-                            onSuccess: (result) => {
-                                setIsLoading(false);
-                                resolve(result);
-                            },
-                            onError: (error) => {
-                                setIsLoading(false);
-                                reject(error);
-                            }
-                        }
-                    );
-                } catch (error) {
-                    setIsLoading(false);
-                    reject(error);
-                }
-            });
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['lotteries'] });
-            queryClient.invalidateQueries({ queryKey: ['user-wonkabars'] });
-        },
-    });
-
-    // Redeem WonkaBars mutation
-    const redeemWonkaBarsMutation = useMutation({
-        mutationFn: async (wonkaBarsId: string): Promise<any> => {
-            if (!currentAccount) throw new Error('No wallet connected');
-
-            return new Promise((resolve, reject) => {
-                setIsLoading(true);
-
-                try {
-                    const tx = new Transaction();
-
-                    tx.moveCall({
-                        target: `${MELTYFI_PACKAGE_ID}::meltyfi_core::redeem_wonkabars`,
-                        arguments: [
-                            tx.object(PROTOCOL_OBJECT_ID),
-                            tx.object(wonkaBarsId),
-                        ],
-                        typeArguments: ['0x2::coin::Coin<0x2::sui::SUI>'], // Generic NFT type
-                    });
-
-                    signAndExecuteTransaction(
-                        {
-                            transaction: tx,
-                        },
-                        {
-                            onSuccess: (result) => {
-                                setIsLoading(false);
-                                resolve(result);
-                            },
-                            onError: (error) => {
-                                setIsLoading(false);
-                                reject(error);
-                            }
-                        }
-                    );
-                } catch (error) {
-                    setIsLoading(false);
-                    reject(error);
-                }
-            });
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['user-wonkabars'] });
-            queryClient.invalidateQueries({ queryKey: ['user-balance'] });
-        },
-    });
-
-    // Get all lotteries - using a more robust approach
-    const getLotteriesQuery = useQuery({
-        queryKey: ['lotteries'],
-        queryFn: async (): Promise<LotteryData[]> => {
             try {
-                // Since lotteries are shared objects, we need to query them differently
-                // This is a simplified approach - in production, you'd want to track lottery IDs
-                const response = await client.multiGetObjects({
-                    ids: [], // You'd need to maintain a list of lottery IDs
-                    options: {
-                        showContent: true,
-                        showType: true,
-                    },
+                // Get protocol object
+                const protocolObject = await suiClient.getObject({
+                    id: PROTOCOL_OBJECT_ID,
+                    options: { showContent: true, showType: true }
                 });
 
-                return response
-                    .map((item) => {
-                        if (item.data?.content && 'fields' in item.data.content) {
-                            const fields = item.data.content.fields as any;
-                            return {
-                                id: item.data.objectId,
-                                lottery_id: parseInt(fields.lottery_id || '0'),
-                                owner: fields.owner || '',
-                                state: parseInt(fields.state || '0'),
-                                expirationDate: parseInt(fields.expiration_date || '0'),
-                                wonkabarPrice: parseInt(fields.wonkabar_price || '0'),
-                                maxSupply: parseInt(fields.max_supply || '0'),
-                                soldCount: parseInt(fields.sold_count || '0'),
-                                winner: fields.winner,
-                            } as LotteryData;
-                        }
+                if (!protocolObject.data?.content || protocolObject.data.content.dataType !== 'moveObject') {
+                    return [];
+                }
+
+                // Get active lottery IDs from protocol
+                const protocolData = protocolObject.data.content.fields as any;
+                const activeLotteryIds = protocolData.active_lotteries || [];
+
+                // Fetch lottery details
+                const lotteryPromises = activeLotteryIds.map(async (lotteryId: string) => {
+                    const lotteryObject = await suiClient.getObject({
+                        id: lotteryId,
+                        options: { showContent: true, showType: true, showDisplay: true }
+                    });
+
+                    if (!lotteryObject.data?.content || lotteryObject.data.content.dataType !== 'moveObject') {
                         return null;
-                    })
-                    .filter((lottery): lottery is LotteryData => lottery !== null);
+                    }
+
+                    const fields = lotteryObject.data.content.fields as any;
+
+                    return {
+                        id: lotteryId,
+                        lotteryId: fields.lottery_id,
+                        owner: fields.owner,
+                        state: fields.state === 0 ? 'ACTIVE' : fields.state === 1 ? 'CANCELLED' : 'CONCLUDED',
+                        expirationDate: parseInt(fields.expiration_date),
+                        wonkaBarPrice: fields.wonkabar_price,
+                        maxSupply: fields.max_supply,
+                        soldCount: fields.sold_count,
+                        winner: fields.winner?.vec?.[0],
+                        collateralNft: {
+                            id: fields.collateral_nft || lotteryId,
+                            name: fields.nft_name || `Lottery #${fields.lottery_id}`,
+                            imageUrl: fields.nft_image_url || '/placeholder-nft.png',
+                            collection: fields.nft_collection
+                        },
+                        totalFunds: fields.funds?.value || '0',
+                        participants: Object.keys(fields.participants?.fields || {}).length
+                    } as Lottery;
+                });
+
+                const resolvedLotteries = await Promise.all(lotteryPromises);
+                return resolvedLotteries.filter(Boolean) as Lottery[];
             } catch (error) {
                 console.error('Error fetching lotteries:', error);
                 return [];
             }
         },
-        refetchInterval: 10000,
+        enabled: !!PROTOCOL_OBJECT_ID,
+        refetchInterval: 10000 // Refresh every 10 seconds
     });
 
-    // Get user's WonkaBars
-    const getUserWonkaBarsQuery = useQuery({
-        queryKey: ['user-wonkabars', currentAccount?.address],
-        queryFn: async (): Promise<WonkaBarsData[]> => {
-            if (!currentAccount) return [];
+    // Query: Get user's WonkaBars
+    const { data: userWonkaBars = [], isLoading: wonkaBarsLoading } = useQuery({
+        queryKey: ['userWonkaBars', currentAccount?.address],
+        queryFn: async (): Promise<WonkaBar[]> => {
+            if (!currentAccount?.address || !WONKA_BAR_TYPE) return [];
 
             try {
-                const response = await client.getOwnedObjects({
+                const objects = await suiClient.getOwnedObjects({
                     owner: currentAccount.address,
-                    filter: {
-                        StructType: `${MELTYFI_PACKAGE_ID}::wonka_bars::WonkaBars`
-                    },
-                    options: {
-                        showContent: true,
-                        showType: true,
-                    }
+                    filter: { StructType: WONKA_BAR_TYPE },
+                    options: { showContent: true, showType: true }
                 });
 
-                return response.data
-                    .map(item => {
-                        if (item.data?.content && 'fields' in item.data.content) {
-                            const fields = item.data.content.fields as any;
-                            return {
-                                id: item.data.objectId,
-                                lottery_id: parseInt(fields.lottery_id || '0'),
-                                quantity: parseInt(fields.quantity || '0'),
-                                owner: fields.owner || '',
-                            } as WonkaBarsData;
-                        }
+                return objects.data.map((obj: SuiObjectResponse) => {
+                    if (!obj.data?.content || obj.data.content.dataType !== 'moveObject') {
                         return null;
-                    })
-                    .filter((wonkaBars): wonkaBars is WonkaBarsData => wonkaBars !== null);
+                    }
+
+                    const fields = obj.data.content.fields as any;
+                    return {
+                        id: obj.data.objectId,
+                        lotteryId: fields.lottery_id,
+                        quantity: fields.quantity || '1',
+                        purchasedAt: parseInt(fields.purchased_at || Date.now())
+                    };
+                }).filter(Boolean) as WonkaBar[];
             } catch (error) {
-                console.error('Error fetching user WonkaBars:', error);
+                console.error('Error fetching WonkaBars:', error);
                 return [];
             }
         },
-        enabled: !!currentAccount,
-        refetchInterval: 10000,
+        enabled: !!currentAccount?.address,
+        refetchInterval: 15000
     });
 
-    // Get user's balance
-    const getUserBalanceQuery = useQuery({
-        queryKey: ['user-balance', currentAccount?.address],
-        queryFn: async (): Promise<string> => {
-            if (!currentAccount) return '0';
+    // Query: Get user stats
+    const { data: userStats } = useQuery({
+        queryKey: ['userStats', currentAccount?.address],
+        queryFn: async (): Promise<UserStats> => {
+            if (!currentAccount?.address) {
+                return {
+                    totalLotteries: 0,
+                    activeLotteries: 0,
+                    totalWonkaBars: 0,
+                    chocoChipBalance: '0',
+                    suiBalance: '0'
+                };
+            }
 
             try {
-                const balance = await client.getBalance({
-                    owner: currentAccount.address,
-                    coinType: '0x2::sui::SUI'
+                // Get user's balance
+                const balance = await suiClient.getBalance({
+                    owner: currentAccount.address
                 });
 
-                return balance.totalBalance;
+                // Get ChocoChip balance
+                let chocoChipBalance = '0';
+                if (CHOCO_CHIP_TYPE) {
+                    const chocoChipObjects = await suiClient.getOwnedObjects({
+                        owner: currentAccount.address,
+                        filter: { StructType: CHOCO_CHIP_TYPE },
+                        options: { showContent: true }
+                    });
+
+                    chocoChipBalance = chocoChipObjects.data.reduce((total, obj) => {
+                        if (obj.data?.content && obj.data.content.dataType === 'moveObject') {
+                            const fields = obj.data.content.fields as any;
+                            return total + BigInt(fields.balance?.value || 0);
+                        }
+                        return total;
+                    }, BigInt(0)).toString();
+                }
+
+                const userLotteries = lotteries.filter(lottery => lottery.owner === currentAccount.address);
+                const activeLotteries = userLotteries.filter(lottery => lottery.state === 'ACTIVE');
+
+                return {
+                    totalLotteries: userLotteries.length,
+                    activeLotteries: activeLotteries.length,
+                    totalWonkaBars: userWonkaBars.length,
+                    chocoChipBalance,
+                    suiBalance: balance.totalBalance
+                };
             } catch (error) {
-                console.error('Error fetching balance:', error);
-                return '0';
+                console.error('Error fetching user stats:', error);
+                return {
+                    totalLotteries: 0,
+                    activeLotteries: 0,
+                    totalWonkaBars: 0,
+                    chocoChipBalance: '0',
+                    suiBalance: '0'
+                };
             }
         },
-        enabled: !!currentAccount,
-        refetchInterval: 30000,
+        enabled: !!currentAccount?.address,
+        refetchInterval: 20000
     });
 
-    // Get user's NFTs for creating lotteries
-    const getUserNFTsQuery = useQuery({
-        queryKey: ['user-nfts', currentAccount?.address],
-        queryFn: async () => {
-            if (!currentAccount) return [];
+    // Mutation: Create lottery
+    const createLotteryMutation = useMutation({
+        mutationFn: async (params: {
+            nftId: string;
+            wonkaBarPrice: string;
+            maxSupply: string;
+            duration: number;
+        }) => {
+            if (!currentAccount?.address) throw new Error('Wallet not connected');
+            if (!MELTYFI_PACKAGE_ID || !PROTOCOL_OBJECT_ID) throw new Error('Contracts not configured');
 
-            try {
-                const response = await client.getOwnedObjects({
-                    owner: currentAccount.address,
-                    options: {
-                        showContent: true,
-                        showType: true,
-                        showDisplay: true,
-                    },
-                    filter: {
-                        MatchNone: [
-                            { StructType: `${MELTYFI_PACKAGE_ID}::wonka_bars::WonkaBars` },
-                            { StructType: '0x2::coin::Coin' },
-                        ]
-                    }
-                });
+            const txb = new TransactionBlock();
 
-                return response.data.map(item => {
-                    if (item.data) {
-                        return {
-                            id: item.data.objectId,
-                            type: item.data.type || '',
-                            display: item.data.display?.data || {},
-                        };
-                    }
-                    return null;
-                }).filter(Boolean);
-            } catch (error) {
-                console.error('Error fetching user NFTs:', error);
-                return [];
-            }
+            // Create lottery transaction
+            txb.moveCall({
+                target: `${MELTYFI_PACKAGE_ID}::core::create_lottery`,
+                arguments: [
+                    txb.object(PROTOCOL_OBJECT_ID),
+                    txb.object(params.nftId),
+                    txb.pure(params.wonkaBarPrice),
+                    txb.pure(params.maxSupply),
+                    txb.pure(params.duration),
+                    txb.object('0x8') // Clock object
+                ],
+            });
+
+            txb.setGasBudget(DEFAULT_GAS_BUDGET);
+
+            const result = await signAndExecute({
+                transactionBlock: txb,
+                options: { showObjectChanges: true, showEffects: true }
+            });
+
+            return result;
         },
-        enabled: !!currentAccount,
+        onSuccess: () => {
+            toast.success('Lottery created successfully!');
+            queryClient.invalidateQueries({ queryKey: ['lotteries'] });
+            queryClient.invalidateQueries({ queryKey: ['userStats'] });
+        },
+        onError: (error) => {
+            console.error('Create lottery error:', error);
+            toast.error('Failed to create lottery. Please try again.');
+        }
+    });
+
+    // Mutation: Buy WonkaBars
+    const buyWonkaBarsMutation = useMutation({
+        mutationFn: async (params: {
+            lotteryId: string;
+            quantity: number;
+            totalCost: string;
+        }) => {
+            if (!currentAccount?.address) throw new Error('Wallet not connected');
+            if (!MELTYFI_PACKAGE_ID) throw new Error('Contracts not configured');
+
+            const txb = new TransactionBlock();
+
+            // Split SUI coin for payment
+            const [paymentCoin] = txb.splitCoins(txb.gas, [txb.pure(params.totalCost)]);
+
+            // Buy WonkaBars
+            txb.moveCall({
+                target: `${MELTYFI_PACKAGE_ID}::core::buy_wonka_bars`,
+                arguments: [
+                    txb.object(params.lotteryId),
+                    paymentCoin,
+                    txb.pure(params.quantity),
+                    txb.object('0x8'), // Clock object
+                    txb.object(CHOCOLATE_FACTORY_ID)
+                ],
+            });
+
+            txb.setGasBudget(DEFAULT_GAS_BUDGET);
+
+            const result = await signAndExecute({
+                transactionBlock: txb,
+                options: { showObjectChanges: true, showEffects: true }
+            });
+
+            return result;
+        },
+        onSuccess: () => {
+            toast.success('WonkaBars purchased successfully!');
+            queryClient.invalidateQueries({ queryKey: ['lotteries'] });
+            queryClient.invalidateQueries({ queryKey: ['userWonkaBars'] });
+            queryClient.invalidateQueries({ queryKey: ['userStats'] });
+        },
+        onError: (error) => {
+            console.error('Buy WonkaBars error:', error);
+            toast.error('Failed to purchase WonkaBars. Please try again.');
+        }
+    });
+
+    // Mutation: Repay lottery
+    const repayLotteryMutation = useMutation({
+        mutationFn: async (params: {
+            lotteryId: string;
+            repaymentAmount: string;
+        }) => {
+            if (!currentAccount?.address) throw new Error('Wallet not connected');
+            if (!MELTYFI_PACKAGE_ID) throw new Error('Contracts not configured');
+
+            const txb = new TransactionBlock();
+
+            // Split SUI coin for repayment
+            const [repaymentCoin] = txb.splitCoins(txb.gas, [txb.pure(params.repaymentAmount)]);
+
+            // Repay lottery
+            txb.moveCall({
+                target: `${MELTYFI_PACKAGE_ID}::core::repay_lottery`,
+                arguments: [
+                    txb.object(params.lotteryId),
+                    repaymentCoin,
+                    txb.object('0x8') // Clock object
+                ],
+            });
+
+            txb.setGasBudget(DEFAULT_GAS_BUDGET);
+
+            const result = await signAndExecute({
+                transactionBlock: txb,
+                options: { showObjectChanges: true, showEffects: true }
+            });
+
+            return result;
+        },
+        onSuccess: () => {
+            toast.success('Lottery repaid successfully!');
+            queryClient.invalidateQueries({ queryKey: ['lotteries'] });
+            queryClient.invalidateQueries({ queryKey: ['userStats'] });
+        },
+        onError: (error) => {
+            console.error('Repay lottery error:', error);
+            toast.error('Failed to repay lottery. Please try again.');
+        }
     });
 
     return {
-        // Mutations
-        createLottery: createLotteryMutation.mutate,
-        buyWonkaBars: buyWonkaBarsMutation.mutate,
-        redeemWonkaBars: redeemWonkaBarsMutation.mutate,
-
-        // Queries
-        lotteries: getLotteriesQuery.data || [],
-        userWonkaBars: getUserWonkaBarsQuery.data || [],
-        userBalance: getUserBalanceQuery.data || '0',
-        userNFTs: getUserNFTsQuery.data || [],
+        // Data
+        lotteries,
+        userWonkaBars,
+        userStats,
 
         // Loading states
-        isLoading: isLoading ||
-            createLotteryMutation.isPending ||
-            buyWonkaBarsMutation.isPending ||
-            redeemWonkaBarsMutation.isPending,
+        lotteriesLoading,
+        wonkaBarsLoading,
 
-        isLoadingLotteries: getLotteriesQuery.isLoading,
-        isLoadingUserData: getUserWonkaBarsQuery.isLoading || getUserBalanceQuery.isLoading,
-        isLoadingNFTs: getUserNFTsQuery.isLoading,
+        // Mutations
+        createLottery: createLotteryMutation.mutateAsync,
+        buyWonkaBars: buyWonkaBarsMutation.mutateAsync,
+        repayLottery: repayLotteryMutation.mutateAsync,
 
-        // Error states
-        createLotteryError: createLotteryMutation.error,
-        buyWonkaBarsError: buyWonkaBarsMutation.error,
-        redeemError: redeemWonkaBarsMutation.error,
+        // Mutation states
+        isCreatingLottery: createLotteryMutation.isPending,
+        isBuyingWonkaBars: buyWonkaBarsMutation.isPending,
+        isRepayingLottery: repayLotteryMutation.isPending,
 
-        // Refetch functions
-        refetchLotteries: getLotteriesQuery.refetch,
-        refetchUserData: () => {
-            getUserWonkaBarsQuery.refetch();
-            getUserBalanceQuery.refetch();
-        },
+        // Account
+        currentAccount,
+        isConnected: !!currentAccount
     };
 }
