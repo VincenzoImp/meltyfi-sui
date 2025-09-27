@@ -18,12 +18,19 @@
     "setup:testnet": "./scripts/sui_setup.sh",
     "validate:testnet": "./scripts/sui_validation.sh",
     "deploy:full": "./scripts/deployment.sh",
+    "deploy:auto": "./scripts/auto_deploy.sh",
+    "deploy:clean": "./scripts/auto_deploy.sh --clean",
+    "deploy:force": "./scripts/auto_deploy.sh --force",
+    "deploy:help": "./scripts/auto_deploy.sh --help",
     "fix:move-config": "cd contracts/meltyfi && find sources -name '*.move' -exec sed -i '' -e 's/use sui::transfer;//g' -e 's/use sui::tx_context::{Self, TxContext};//g' -e 's/use sui::object::{Self, UID, ID};//g' {} +",
     "cleanup": "./scripts/cleanup_lockfiles.sh",
     "check:env": "echo 'Checking environment configuration...' && grep -E 'NEXT_PUBLIC_SUI_NETWORK|NEXT_PUBLIC_SUI_RPC_URL' .env || echo 'No .env file found'",
     "switch:testnet": "sui client switch --env testnet && echo 'Switched to testnet environment'",
     "balance": "sui client balance",
-    "faucet": "echo 'Get testnet SUI from: https://faucet.testnet.sui.io'"
+    "faucet": "echo 'Get testnet SUI from: https://faucet.testnet.sui.io'",
+    "status": "echo '📊 MeltyFi Status:' && echo '├─ Network:' $(sui client active-env 2>/dev/null || echo 'unknown') && echo '├─ Address:' $(sui client active-address 2>/dev/null | head -c 10)... && echo '└─ Balance:' $(sui client balance 2>/dev/null | grep -oE '[0-9]+(\\.\\.[0-9]+)?\\s*SUI' | head -1 || echo 'unknown')",
+    "explorer": "echo 'Open in browser:' && echo '🔍 Sui Explorer: https://suiexplorer.com/?network=testnet' && echo '🚰 Testnet Faucet: https://faucet.testnet.sui.io'",
+    "logs": "tail -f deployment.log 2>/dev/null || echo 'No deployment logs found'"
   },
   "repository": {
     "type": "git",
@@ -36,7 +43,8 @@
     "blockchain",
     "lottery",
     "liquidity",
-    "testnet"
+    "testnet",
+    "automated-deployment"
   ],
   "author": "MeltyFi Team",
   "license": "MIT",
