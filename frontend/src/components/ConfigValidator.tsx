@@ -35,7 +35,7 @@ export function ConfigValidator({ children }: { children: React.ReactNode }) {
                         <div className="bg-gray-800/50 rounded-lg p-4 text-left">
                             <p className="text-xs text-white/40 mb-2">Run deployment script:</p>
                             <code className="text-xs text-green-400 font-mono">
-                                npm run deploy:full
+                                npm run deploy:auto
                             </code>
                         </div>
 
