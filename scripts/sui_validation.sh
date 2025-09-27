@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Sui Environment Validation Script for MeltyFi
-# Validates that Sui environment is properly configured
+# Sui Environment Validation Script for MeltyFi - TESTNET
+# Validates that Sui environment is properly configured for testnet
 
-echo "🔍 Validating Sui environment for MeltyFi deployment..."
+echo "🔍 Validating Sui testnet environment for MeltyFi deployment..."
 
 # Colors
 GREEN='\033[0;32m'
@@ -47,20 +47,20 @@ if command -v sui &> /dev/null; then
     print_pass "Sui CLI found: $SUI_VERSION"
 else
     print_fail "Sui CLI not found"
-    print_info "Install with: cargo install --locked --git https://github.com/MystenLabs/sui.git --branch devnet sui"
+    print_info "Install with: cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui"
 fi
 
 # Test 2: Active Environment
 print_test "Active environment configuration"
 ACTIVE_ENV=$(sui client active-env 2>/dev/null || echo "")
-if [ "$ACTIVE_ENV" = "devnet" ]; then
-    print_pass "Active environment: devnet"
+if [ "$ACTIVE_ENV" = "testnet" ]; then
+    print_pass "Active environment: testnet"
 elif [ -n "$ACTIVE_ENV" ]; then
-    print_warn "Active environment: $ACTIVE_ENV (expected: devnet)"
-    print_info "Switch with: sui client switch --env devnet"
+    print_warn "Active environment: $ACTIVE_ENV (expected: testnet)"
+    print_info "Switch with: sui client switch --env testnet"
 else
     print_fail "No active environment found"
-    print_info "Set up with: sui client new-env --alias devnet --rpc https://fullnode.devnet.sui.io:443"
+    print_info "Set up with: sui client new-env --alias testnet --rpc https://fullnode.testnet.sui.io:443"
 fi
 
 # Test 3: Active Address
@@ -76,11 +76,11 @@ else
 fi
 
 # Test 4: Network Connectivity
-print_test "Network connectivity to Sui devnet"
+print_test "Network connectivity to Sui testnet"
 if sui client balance &>/dev/null; then
-    print_pass "Successfully connected to Sui devnet"
+    print_pass "Successfully connected to Sui testnet"
 else
-    print_fail "Cannot connect to Sui devnet"
+    print_fail "Cannot connect to Sui testnet"
     print_info "Check internet connection and RPC endpoint"
 fi
 
@@ -107,10 +107,10 @@ if [ "$BALANCE" -gt 1000000000 ]; then
     print_pass "SUI balance: $BALANCE_SUI SUI (sufficient for deployment)"
 elif [ "$BALANCE" -gt 0 ]; then
     print_warn "SUI balance: $BALANCE_SUI SUI (may be low for multiple transactions)"
-    print_info "Get more SUI from: https://faucet.devnet.sui.io"
+    print_info "Get more SUI from: https://faucet.testnet.sui.io"
 else
     print_fail "No SUI balance found"
-    print_info "Get testnet SUI from Discord or web faucet"
+    print_info "Get testnet SUI from web faucet or Discord"
 fi
 
 # Test 6: jq availability (optional but helpful)
@@ -126,10 +126,10 @@ fi
 print_test "Environment variables"
 ENV_FILE="../.env"
 if [ -f "$ENV_FILE" ]; then
-    if grep -q "NEXT_PUBLIC_SUI_NETWORK=devnet" "$ENV_FILE"; then
-        print_pass "Environment file configured for devnet"
+    if grep -q "NEXT_PUBLIC_SUI_NETWORK=testnet" "$ENV_FILE"; then
+        print_pass "Environment file configured for testnet"
     else
-        print_warn "Environment file exists but may not be configured for devnet"
+        print_warn "Environment file exists but may not be configured for testnet"
     fi
 else
     print_warn "No .env file found (will be created during deployment)"
@@ -139,17 +139,19 @@ fi
 print_test "Move.toml configuration"
 MOVE_TOML="../contracts/meltyfi/Move.toml"
 if [ -f "$MOVE_TOML" ]; then
-    if grep -q 'framework/devnet' "$MOVE_TOML"; then
-        print_pass "Move.toml configured for devnet framework"
+    if grep -q 'framework/testnet' "$MOVE_TOML"; then
+        print_pass "Move.toml configured for testnet framework"
     else
-        print_warn "Move.toml may not be using devnet framework"
+        print_warn "Move.toml may not be using testnet framework"
+        print_info "Should use: rev = \"framework/testnet\""
     fi
     
     # Check for duplicate addresses
-    if grep -c "meltyfi = " "$MOVE_TOML" | grep -q "1"; then
+    ADDRESS_COUNT=$(grep -c "meltyfi = " "$MOVE_TOML" 2>/dev/null || echo "0")
+    if [ "$ADDRESS_COUNT" -eq 1 ]; then
         print_pass "No duplicate address assignments in Move.toml"
     else
-        print_fail "Duplicate address assignments found in Move.toml"
+        print_fail "Duplicate or missing address assignments found in Move.toml"
         print_info "This will cause compilation errors"
     fi
 else
@@ -189,10 +191,36 @@ else
     print_fail "Missing directories: ${MISSING_DIRS[*]}"
 fi
 
+# Test 11: Frontend configuration
+print_test "Frontend configuration for testnet"
+FRONTEND_ENV="../frontend/.env.local"
+if [ -f "$FRONTEND_ENV" ]; then
+    if grep -q "testnet" "$FRONTEND_ENV"; then
+        print_pass "Frontend configured for testnet"
+    else
+        print_warn "Frontend may not be configured for testnet"
+    fi
+else
+    print_warn "Frontend .env.local not found (will be created during deployment)"
+fi
+
+# Test 12: RPC endpoint validation
+print_test "Testnet RPC endpoint"
+if command -v curl &> /dev/null; then
+    if curl -s --connect-timeout 5 "https://fullnode.testnet.sui.io:443" > /dev/null; then
+        print_pass "Testnet RPC endpoint accessible"
+    else
+        print_warn "Cannot reach testnet RPC endpoint"
+        print_info "Check internet connection or try later"
+    fi
+else
+    print_warn "curl not available, cannot test RPC endpoint"
+fi
+
 # Summary
 echo
 echo "═══════════════════════════════════════"
-echo "🎯 Validation Summary"
+echo "🎯 Testnet Validation Summary"
 echo "═══════════════════════════════════════"
 echo -e "✅ Passed:   ${GREEN}$PASSED${NC}"
 echo -e "⚠️  Warnings: ${YELLOW}$WARNINGS${NC}"
@@ -201,10 +229,10 @@ echo "════════════════════════�
 
 if [ "$FAILED" -eq 0 ]; then
     if [ "$WARNINGS" -eq 0 ]; then
-        echo -e "${GREEN}🎉 Perfect! Your environment is ready for MeltyFi deployment.${NC}"
+        echo -e "${GREEN}🎉 Perfect! Your environment is ready for MeltyFi testnet deployment.${NC}"
         echo -e "${GREEN}Run: ./scripts/deployment.sh${NC}"
     else
-        echo -e "${YELLOW}✨ Good! Your environment is mostly ready.${NC}"
+        echo -e "${YELLOW}✨ Good! Your environment is mostly ready for testnet.${NC}"
         echo -e "${YELLOW}Address the warnings above for the best experience.${NC}"
         echo -e "${GREEN}Run: ./scripts/deployment.sh${NC}"
     fi
@@ -213,10 +241,12 @@ else
     echo
     echo "Quick fixes:"
     echo "1. Run setup script: ./scripts/sui_setup.sh"
-    echo "2. Get testnet SUI: https://faucet.devnet.sui.io"
+    echo "2. Get testnet SUI: https://faucet.testnet.sui.io"
     echo "3. Install missing tools as indicated above"
+    echo "4. Switch to testnet: sui client switch --env testnet"
 fi
 
 echo
 echo "For detailed setup, run: ./scripts/sui_setup.sh"
 echo "For deployment, run: ./scripts/deployment.sh"
+echo "Testnet faucet: https://faucet.testnet.sui.io"

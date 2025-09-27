@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# MeltyFi Enhanced Deployment Script
+# MeltyFi Enhanced Deployment Script for Testnet
 # Fixes all smart contract issues and provides robust deployment
 
 set -e
 
-echo "🍫 Starting MeltyFi Enhanced Deployment Process..."
+echo "🍫 Starting MeltyFi Enhanced Deployment Process on Testnet..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -73,7 +73,7 @@ check_prerequisites() {
         for tool in "${missing_tools[@]}"; do
             case $tool in
                 "sui")
-                    echo "  - Sui CLI: cargo install --locked --git https://github.com/MystenLabs/sui.git --branch devnet sui"
+                    echo "  - Sui CLI: cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui"
                     ;;
                 "node")
                     echo "  - Node.js: https://nodejs.org/ (v18 or later)"
@@ -90,183 +90,28 @@ check_prerequisites() {
     local sui_version=$(sui --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
     local node_version=$(node --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
     
-    print_info "Building frontend application..."
-    if timeout 300 npm run build 2>&1 | tee "$PROJECT_ROOT/frontend-build.log"; then
-        print_status "Frontend build successful"
-        log "Frontend build successful"
-    else
-        print_error "Frontend build failed or timed out"
-        log "ERROR: Frontend build failed"
-        tail -n 20 "$PROJECT_ROOT/frontend-build.log"
-        exit 1
-    fi
-    
-    cd "$PROJECT_ROOT"
-}
-
-# Generate deployment summary
-generate_summary() {
-    print_step "Generating deployment summary..."
-    log "Generating deployment summary"
-    
-    local summary_file="$PROJECT_ROOT/DEPLOYMENT_SUMMARY.md"
-    
-    if [ -f "$PROJECT_ROOT/deployment-info.json" ]; then
-        local package_id=$(jq -r '.packageId' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null || echo "N/A")
-        local transaction_digest=$(jq -r '.transactionDigest' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null || echo "N/A")
-        local deployed_at=$(jq -r '.deployedAt' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null || echo "N/A")
-        local deployer=$(jq -r '.deployer' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null || echo "N/A")
-        
-        cat > "$summary_file" << EOF
-# 🍫 MeltyFi Deployment Summary
-
-## Deployment Information
-- **Network**: Sui Devnet
-- **Package ID**: \`$package_id\`
-- **Deployed At**: $deployed_at
-- **Deployer Address**: \`$deployer\`
-- **Transaction Hash**: \`$transaction_digest\`
-
-## Contract Addresses
-- **Package ID**: \`$package_id\`
-- **ChocoChip Type**: \`${package_id}::choco_chip::CHOCO_CHIP\`
-- **WonkaBars Type**: \`${package_id}::wonka_bars::WonkaBars\`
-
-## Verification Links
-- **Sui Explorer**: [View Transaction](https://suiexplorer.com/txblock/$transaction_digest?network=devnet)
-- **Package Explorer**: [View Package](https://suiexplorer.com/object/$package_id?network=devnet)
-
-## Next Steps
-1. **Verify Deployment**: Check the transaction on Sui Explorer
-2. **Test Frontend**: Run \`npm run dev:frontend\` to start the development server
-3. **Connect Wallet**: Use a Sui wallet to interact with the protocol
-4. **Create First Lottery**: Deposit an NFT and create your first lottery
-
-## Important Notes
-- This deployment is on **Sui Devnet** for testing purposes
-- Use testnet SUI tokens for all transactions
-- Keep your private keys secure
-- Report any issues on GitHub
-
-## Support
-- **GitHub**: [MeltyFi Repository](https://github.com/VincenzoImp/MeltyFi)
-- **Documentation**: [MeltyFi Docs](https://docs.meltyfi.com)
-- **Discord**: [Join Community](https://discord.gg/meltyfi)
-
----
-*Deployment completed successfully at $deployed_at*
-EOF
-        
-        print_status "Deployment summary generated: DEPLOYMENT_SUMMARY.md"
-        log "Deployment summary generated"
-    else
-        print_warning "Could not generate deployment summary - deployment info not found"
-        log "WARNING: Could not generate deployment summary"
-    fi
-}
-
-# Cleanup function
-cleanup() {
-    print_info "Cleaning up temporary files..."
-    rm -f "$PROJECT_ROOT"/*.bak 2>/dev/null || true
-    log "Cleanup completed"
-}
-
-# Main deployment function
-main() {
-    print_info "🍫 MeltyFi Enhanced Deployment Started"
-    print_info "======================================="
-    log "Deployment process started"
-    
-    # Trap cleanup on exit
-    trap cleanup EXIT
-    
-    check_prerequisites
-    setup_sui
-    install_dependencies
-    fix_move_config
-    build_contracts
-    deploy_contracts
-    test_frontend
-    generate_summary
-    
-    print_status "🎉 Deployment completed successfully!"
-    print_info "======================================="
-    
-    if [ -f "$PROJECT_ROOT/deployment-info.json" ]; then
-        local package_id=$(jq -r '.packageId' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null)
-        local transaction_digest=$(jq -r '.transactionDigest' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null)
-        
-        echo
-        print_info "📋 Deployment Details:"
-        print_info "Package ID: $package_id"
-        print_info "Network: Sui Devnet"
-        print_info "Explorer: https://suiexplorer.com/txblock/$transaction_digest?network=devnet"
-        print_info "Documentation: Check DEPLOYMENT_SUMMARY.md for complete details"
-        echo
-    fi
-    
-    log "Deployment process completed successfully"
-    
-    # Ask if user wants to start development environment
-    read -p "$(echo -e ${YELLOW}"Start development frontend? [y/N]: "${NC})" -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        print_info "Starting development server..."
-        cd frontend
-        npm run dev
-    else
-        print_info "To start the frontend later, run: npm run dev:frontend"
-        print_info "Check DEPLOYMENT_SUMMARY.md for next steps"
-    fi
-}
-
-# Error handling
-handle_error() {
-    print_error "An error occurred during deployment"
-    log "ERROR: Deployment failed with error"
-    
-    if [ -f "$DEPLOYMENT_LOG" ]; then
-        print_info "Check deployment.log for detailed error information"
-    fi
-    
-    print_info "Common solutions:"
-    print_info "1. Ensure you have sufficient SUI balance"
-    print_info "2. Check your internet connection"
-    print_info "3. Verify Sui CLI is properly configured"
-    print_info "4. Try running the script again"
-    
-    exit 1
-}
-
-# Set error trap
-trap handle_error ERR
-
-# Run main function if script is executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-fi "Sui CLI version: $sui_version"
+    print_info "Sui CLI version: $sui_version"
     print_info "Node.js version: $node_version"
     log "Prerequisites checked - Sui: $sui_version, Node: $node_version"
     
     print_status "All prerequisites installed"
 }
 
-# Setup Sui environment
+# Setup Sui environment for testnet
 setup_sui() {
-    print_step "Setting up Sui environment..."
-    log "Setting up Sui environment"
+    print_step "Setting up Sui testnet environment..."
+    log "Setting up Sui testnet environment"
     
-    # Check if devnet environment exists, create if not
-    if ! sui client envs 2>/dev/null | grep -q "devnet"; then
-        print_info "Creating devnet environment..."
-        sui client new-env --alias devnet --rpc https://fullnode.devnet.sui.io:443
-        log "Created devnet environment"
+    # Check if testnet environment exists, create if not
+    if ! sui client envs 2>/dev/null | grep -q "testnet"; then
+        print_info "Creating testnet environment..."
+        sui client new-env --alias testnet --rpc https://fullnode.testnet.sui.io:443
+        log "Created testnet environment"
     fi
     
-    # Switch to devnet
-    sui client switch --env devnet
-    log "Switched to devnet"
+    # Switch to testnet
+    sui client switch --env testnet
+    log "Switched to testnet"
     
     # Check if wallet exists
     if ! sui client addresses 2>/dev/null | grep -q "0x"; then
@@ -288,8 +133,8 @@ setup_sui() {
     if [ "$balance" -lt "1000000000" ]; then
         print_warning "Low SUI balance detected ($balance_sui SUI)"
         print_info "You may need testnet SUI for deployment."
-        print_info "Get testnet SUI from: https://faucet.devnet.sui.io"
-        print_info "Or use Discord faucet: https://discord.gg/sui (#devnet-faucet channel)"
+        print_info "Get testnet SUI from: https://faucet.testnet.sui.io"
+        print_info "Or use Discord faucet: https://discord.gg/sui (#testnet-faucet channel)"
         
         read -p "$(echo -e ${YELLOW}Continue with current balance? [y/N]: ${NC})" -n 1 -r
         echo
@@ -300,7 +145,7 @@ setup_sui() {
         log "Proceeding with low balance"
     fi
     
-    print_status "Sui environment setup complete"
+    print_status "Sui testnet environment setup complete"
 }
 
 # Install dependencies
@@ -333,9 +178,9 @@ install_dependencies() {
     fi
 }
 
-# Fix Move.toml configuration
+# Fix Move.toml configuration for testnet
 fix_move_config() {
-    print_step "Fixing Move configuration..."
+    print_step "Fixing Move configuration for testnet..."
     log "Fixing Move configuration"
     
     local move_toml="$CONTRACT_DIR/Move.toml"
@@ -345,7 +190,7 @@ fix_move_config() {
         cp "$move_toml" "$move_toml.backup"
         log "Backed up original Move.toml"
         
-        # Create fixed Move.toml
+        # Create fixed Move.toml for testnet
         cat > "$move_toml" << 'EOF'
 [package]
 name = "meltyfi"
@@ -353,7 +198,7 @@ edition = "2024.beta"
 version = "1.0.0"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/devnet" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
 
 [addresses]
 meltyfi = "0x0"
@@ -361,11 +206,11 @@ meltyfi = "0x0"
 [dev-dependencies]
 
 [dev-addresses]
-# Removed duplicate address assignment to fix build error
+# Testnet configuration for MeltyFi
 EOF
         
-        print_status "Move.toml configuration fixed"
-        log "Move.toml configuration fixed"
+        print_status "Move.toml configuration fixed for testnet"
+        log "Move.toml configuration fixed for testnet"
     else
         print_error "Move.toml not found at $move_toml"
         exit 1
@@ -383,7 +228,7 @@ build_contracts() {
     rm -rf build/ 2>/dev/null || true
     
     # Build contracts with detailed output
-    print_info "Compiling Move contracts..."
+    print_info "Compiling Move contracts for testnet..."
     if sui move build 2>&1 | tee "$PROJECT_ROOT/build.log"; then
         print_status "Contracts compiled successfully"
         log "Contract compilation successful"
@@ -409,10 +254,10 @@ build_contracts() {
     cd "$PROJECT_ROOT"
 }
 
-# Deploy contracts
+# Deploy contracts to testnet
 deploy_contracts() {
-    print_step "Deploying contracts to devnet..."
-    log "Starting contract deployment"
+    print_step "Deploying contracts to testnet..."
+    log "Starting contract deployment to testnet"
     
     cd "$CONTRACT_DIR"
     
@@ -433,10 +278,10 @@ deploy_contracts() {
     log "Gas budget: $gas_budget MIST"
     
     # Deploy with enhanced error handling
-    print_info "Publishing to Sui devnet..."
+    print_info "Publishing to Sui testnet..."
     local deploy_output
     if deploy_output=$(sui client publish --gas-budget "$gas_budget" --json 2>&1); then
-        print_status "Contracts deployed successfully!"
+        print_status "Contracts deployed successfully to testnet!"
         log "Contract deployment successful"
         
         # Save full deployment output
@@ -453,25 +298,25 @@ deploy_contracts() {
                 log "Package ID: $package_id"
                 log "Transaction: $transaction_digest"
                 
-                # Save deployment info
+                # Save deployment info for testnet
                 cat > "$PROJECT_ROOT/deployment-info.json" << EOF
 {
-  "network": "devnet",
+  "network": "testnet",
   "packageId": "$package_id",
   "deployedAt": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
   "deployer": "$current_address",
   "transactionDigest": "$transaction_digest",
-  "suiExplorerUrl": "https://suiexplorer.com/txblock/$transaction_digest?network=devnet",
+  "suiExplorerUrl": "https://suiexplorer.com/txblock/$transaction_digest?network=testnet",
   "gasUsed": "$gas_budget",
   "status": "success"
 }
 EOF
                 
-                # Update .env file
+                # Update .env file for testnet
                 cat > "$PROJECT_ROOT/.env" << EOF
-# Sui Network Configuration
-NEXT_PUBLIC_SUI_NETWORK=devnet
-NEXT_PUBLIC_SUI_RPC_URL=https://fullnode.devnet.sui.io:443
+# Sui Network Configuration - TESTNET
+NEXT_PUBLIC_SUI_NETWORK=testnet
+NEXT_PUBLIC_SUI_RPC_URL=https://fullnode.testnet.sui.io:443
 
 # Contract Addresses
 NEXT_PUBLIC_MELTYFI_PACKAGE_ID=$package_id
@@ -492,13 +337,14 @@ NEXT_PUBLIC_DEBUG=true
 DEPLOYED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 DEPLOYER_ADDRESS=$current_address
 TRANSACTION_DIGEST=$transaction_digest
+NETWORK=testnet
 EOF
                 
                 # Copy to frontend directory
                 cp "$PROJECT_ROOT/.env" "$PROJECT_ROOT/frontend/.env.local" 2>/dev/null || true
                 
-                print_status "Environment variables updated"
-                log "Environment variables updated"
+                print_status "Environment variables updated for testnet"
+                log "Environment variables updated for testnet"
                 
                 # Extract object IDs for shared objects
                 local protocol_id=$(echo "$deploy_output" | jq -r '.objectChanges[]? | select(.objectType | contains("Protocol")) | .objectId' 2>/dev/null || echo "")
@@ -510,6 +356,7 @@ EOF
                     
                     # Update .env with object IDs
                     sed -i.bak "s/NEXT_PUBLIC_PROTOCOL_OBJECT_ID=/NEXT_PUBLIC_PROTOCOL_OBJECT_ID=$protocol_id/" "$PROJECT_ROOT/.env"
+                    cp "$PROJECT_ROOT/.env" "$PROJECT_ROOT/frontend/.env.local" 2>/dev/null || true
                 fi
                 
                 if [ -n "$factory_id" ] && [ "$factory_id" != "null" ]; then
@@ -517,6 +364,7 @@ EOF
                     log "Chocolate Factory ID: $factory_id"
                     
                     sed -i.bak "s/NEXT_PUBLIC_CHOCOLATE_FACTORY_ID=/NEXT_PUBLIC_CHOCOLATE_FACTORY_ID=$factory_id/" "$PROJECT_ROOT/.env"
+                    cp "$PROJECT_ROOT/.env" "$PROJECT_ROOT/frontend/.env.local" 2>/dev/null || true
                 fi
                 
             else
@@ -555,4 +403,159 @@ test_frontend() {
     
     cd frontend
     
-    print_info
+    print_info "Building frontend application..."
+    if timeout 300 npm run build 2>&1 | tee "$PROJECT_ROOT/frontend-build.log"; then
+        print_status "Frontend build successful"
+        log "Frontend build successful"
+    else
+        print_error "Frontend build failed or timed out"
+        log "ERROR: Frontend build failed"
+        tail -n 20 "$PROJECT_ROOT/frontend-build.log"
+        exit 1
+    fi
+    
+    cd "$PROJECT_ROOT"
+}
+
+# Generate deployment summary
+generate_summary() {
+    print_step "Generating deployment summary..."
+    log "Generating deployment summary"
+    
+    local summary_file="$PROJECT_ROOT/DEPLOYMENT_SUMMARY.md"
+    
+    if [ -f "$PROJECT_ROOT/deployment-info.json" ]; then
+        local package_id=$(jq -r '.packageId' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null || echo "N/A")
+        local transaction_digest=$(jq -r '.transactionDigest' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null || echo "N/A")
+        local deployed_at=$(jq -r '.deployedAt' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null || echo "N/A")
+        local deployer=$(jq -r '.deployer' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null || echo "N/A")
+        
+        cat > "$summary_file" << EOF
+# 🍫 MeltyFi Deployment Summary
+
+## Deployment Information
+- **Network**: Sui Testnet
+- **Package ID**: \`$package_id\`
+- **Deployed At**: $deployed_at
+- **Deployer Address**: \`$deployer\`
+- **Transaction Hash**: \`$transaction_digest\`
+
+## Contract Addresses
+- **Package ID**: \`$package_id\`
+- **ChocoChip Type**: \`${package_id}::choco_chip::CHOCO_CHIP\`
+- **WonkaBars Type**: \`${package_id}::wonka_bars::WonkaBars\`
+
+## Verification Links
+- **Sui Explorer**: [View Transaction](https://suiexplorer.com/txblock/$transaction_digest?network=testnet)
+- **Package Explorer**: [View Package](https://suiexplorer.com/object/$package_id?network=testnet)
+
+## Next Steps
+1. **Verify Deployment**: Check the transaction on Sui Explorer
+2. **Test Frontend**: Run \`npm run dev:frontend\` to start the development server
+3. **Connect Wallet**: Use a Sui wallet to interact with the protocol
+4. **Create First Lottery**: Deposit an NFT and create your first lottery
+
+## Important Notes
+- This deployment is on **Sui Testnet** for testing purposes
+- Use testnet SUI tokens for all transactions
+- Keep your private keys secure
+- Report any issues on GitHub
+
+## Support
+- **GitHub**: [MeltyFi Repository](https://github.com/VincenzoImp/MeltyFi)
+- **Documentation**: [MeltyFi Docs](https://docs.meltyfi.com)
+- **Discord**: [Join Community](https://discord.gg/meltyfi)
+
+---
+*Deployment completed successfully at $deployed_at*
+EOF
+        
+        print_status "Deployment summary generated: DEPLOYMENT_SUMMARY.md"
+        log "Deployment summary generated"
+    else
+        print_warning "Could not generate deployment summary - deployment info not found"
+        log "WARNING: Could not generate deployment summary"
+    fi
+}
+
+# Cleanup function
+cleanup() {
+    print_info "Cleaning up temporary files..."
+    rm -f "$PROJECT_ROOT"/*.bak 2>/dev/null || true
+    log "Cleanup completed"
+}
+
+# Main deployment function
+main() {
+    print_info "🍫 MeltyFi Enhanced Deployment Started on Testnet"
+    print_info "==============================================="
+    log "Deployment process started on testnet"
+    
+    # Trap cleanup on exit
+    trap cleanup EXIT
+    
+    check_prerequisites
+    setup_sui
+    install_dependencies
+    fix_move_config
+    build_contracts
+    deploy_contracts
+    test_frontend
+    generate_summary
+    
+    print_status "🎉 Deployment completed successfully on testnet!"
+    print_info "==============================================="
+    
+    if [ -f "$PROJECT_ROOT/deployment-info.json" ]; then
+        local package_id=$(jq -r '.packageId' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null)
+        local transaction_digest=$(jq -r '.transactionDigest' "$PROJECT_ROOT/deployment-info.json" 2>/dev/null)
+        
+        echo
+        print_info "📋 Deployment Details:"
+        print_info "Package ID: $package_id"
+        print_info "Network: Sui Testnet"
+        print_info "Explorer: https://suiexplorer.com/txblock/$transaction_digest?network=testnet"
+        print_info "Documentation: Check DEPLOYMENT_SUMMARY.md for complete details"
+        echo
+    fi
+    
+    log "Deployment process completed successfully on testnet"
+    
+    # Ask if user wants to start development environment
+    read -p "$(echo -e ${YELLOW}"Start development frontend? [y/N]: "${NC})" -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        print_info "Starting development server..."
+        cd frontend
+        npm run dev
+    else
+        print_info "To start the frontend later, run: npm run dev:frontend"
+        print_info "Check DEPLOYMENT_SUMMARY.md for next steps"
+    fi
+}
+
+# Error handling
+handle_error() {
+    print_error "An error occurred during deployment"
+    log "ERROR: Deployment failed with error"
+    
+    if [ -f "$DEPLOYMENT_LOG" ]; then
+        print_info "Check deployment.log for detailed error information"
+    fi
+    
+    print_info "Common solutions:"
+    print_info "1. Ensure you have sufficient SUI balance"
+    print_info "2. Check your internet connection"
+    print_info "3. Verify Sui CLI is properly configured"
+    print_info "4. Try running the script again"
+    
+    exit 1
+}
+
+# Set error trap
+trap handle_error ERR
+
+# Run main function if script is executed directly
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi

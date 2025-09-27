@@ -4,7 +4,7 @@ edition = "2024.beta"
 version = "1.0.0"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/devnet" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
 
 [addresses]
 meltyfi = "0x0"
@@ -12,4 +12,4 @@ meltyfi = "0x0"
 [dev-dependencies]
 
 [dev-addresses]
-# Removed duplicate address assignment to fix build error
+# Testnet configuration for MeltyFi

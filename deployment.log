@@ -1,0 +1,22 @@
+Deployment started at Sab 27 Set 2025 11:22:26 CEST
+2025-09-27 11:22:26 - Deployment process started on testnet
+2025-09-27 11:22:26 - Checking prerequisites
+2025-09-27 11:22:26 - Prerequisites checked - Sui: 1.57.0, Node: 24.8.0
+2025-09-27 11:22:26 - Setting up Sui testnet environment
+2025-09-27 11:22:27 - Switched to testnet
+2025-09-27 11:22:27 - Active address: 0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2
+2025-09-27 11:22:28 - Current balance: 0 SUI
+2025-09-27 11:24:06 - Proceeding with low balance
+2025-09-27 11:24:06 - Installing dependencies
+2025-09-27 11:24:07 - Root dependencies installed
+2025-09-27 11:24:07 - Frontend dependencies installed
+2025-09-27 11:24:07 - Fixing Move configuration
+2025-09-27 11:24:07 - Backed up original Move.toml
+2025-09-27 11:24:07 - Move.toml configuration fixed for testnet
+2025-09-27 11:24:07 - Building contracts
+2025-09-27 11:24:11 - Contract compilation successful
+2025-09-27 11:24:12 - All tests passed
+2025-09-27 11:24:12 - Starting contract deployment to testnet
+2025-09-27 11:24:13 - Gas budget: 100000000 MIST
+2025-09-27 11:24:15 - ERROR: Deployment failed
+2025-09-27 11:24:15 - Cleanup completed

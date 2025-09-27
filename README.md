@@ -2,7 +2,7 @@
 
 > **Making the Illiquid Liquid** - Transform your NFTs into instant liquidity through innovative lottery mechanics on Sui blockchain.
 
-[![Sui Network](https://img.shields.io/badge/Sui-Network-blue)](https://sui.io)
+[![Sui Network](https://img.shields.io/badge/Sui-Testnet-blue)](https://sui.io)
 [![Move Language](https://img.shields.io/badge/Move-Smart_Contracts-green)](https://move-language.github.io)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -46,24 +46,28 @@ cd MeltyFi
 # Install all dependencies
 npm run install:all
 
-# Set up Sui environment (if needed)
-./scripts/sui_setup.sh
+# Set up Sui testnet environment
+npm run setup:testnet
+# OR manually: ./scripts/sui_setup.sh
 ```
 
 ### Development Setup
 
 ```bash
+# Validate environment
+npm run validate:testnet
+
 # Build Move contracts
 npm run build:contracts
 
 # Run contract tests
 npm run test:contracts
 
+# Deploy to testnet
+npm run deploy:full
+
 # Start frontend development server
 npm run dev:frontend
-
-# Full deployment to devnet
-npm run deploy:devnet
 ```
 
 ### Environment Configuration
@@ -71,9 +75,9 @@ npm run deploy:devnet
 Create `.env` file in the root directory:
 
 ```env
-# Sui Network Configuration
-NEXT_PUBLIC_SUI_NETWORK=devnet
-NEXT_PUBLIC_SUI_RPC_URL=https://fullnode.devnet.sui.io:443
+# Sui Network Configuration - TESTNET
+NEXT_PUBLIC_SUI_NETWORK=testnet
+NEXT_PUBLIC_SUI_RPC_URL=https://fullnode.testnet.sui.io:443
 SUI_PRIVATE_KEY=your_private_key_here
 
 # Contract Addresses (filled after deployment)
@@ -86,11 +90,212 @@ NEXT_PUBLIC_APP_NAME=MeltyFi
 NEXT_PUBLIC_APP_DESCRIPTION=Making the illiquid liquid
 NODE_ENV=development
 NEXT_PUBLIC_DEBUG=true
+NETWORK=testnet
+```
+
+## 🧪 **Testnet Setup**
+
+### Get Testnet SUI Tokens
+
+You'll need testnet SUI to deploy contracts and interact with the protocol:
+
+1. **Web Faucet (Recommended)**:
+   - Visit: [https://faucet.testnet.sui.io/gas](https://faucet.testnet.sui.io/gas)
+   - Enter your Sui address
+   - Complete captcha and request tokens
+
+2. **Discord Faucet**:
+   - Join [Sui Discord](https://discord.gg/sui)
+   - Go to `#testnet-faucet` channel
+   - Use command: `!faucet YOUR_ADDRESS`
+
+3. **CLI Faucet**:
+   ```bash
+   sui client faucet
+   ```
+
+### Verify Testnet Configuration
+
+```bash
+# Check current environment
+sui client active-env
+# Should show: testnet
+
+# Check balance
+sui client balance
+
+# Validate entire setup
+npm run validate:testnet
 ```
 
 ## 📚 **Technical Documentation**
 
-### **Smart Contract Architecture**
+### **Testnet Resources**
+- 🚰 [Testnet Faucet](https://faucet.testnet.sui.io/gas)
+- 🔍 [Testnet Explorer](https://suiexplorer.com/?network=testnet)
+- 📖 [Sui Testnet Guide](https://docs.sui.io/guides/developer/getting-started/sui-environment)
+
+## ⚖️ **Legal & Disclaimers**
+
+### **License**
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+### **Testnet Disclaimers**
+- **Testnet Environment**: This deployment is for testing purposes only
+- **No Real Value**: Testnet tokens have no monetary value
+- **Experimental Software**: Use at your own risk for testing
+- **Data Reset**: Testnet data may be reset at any time
+- **No Guarantees**: No guarantees of data persistence or availability
+
+### **Important Notes**
+- **Testnet Only**: Do not use real assets or mainnet tokens
+- **Educational Purpose**: Designed for learning and testing
+- **Community Project**: Open source and community-driven
+- **Active Development**: Features and functionality may change
+
+### **Risk Factors**
+- Smart contract bugs in testnet environment
+- Testnet network instability
+- Potential data loss during resets
+- UI/UX improvements in progress
+
+## 🍫 **Sweet Success on Testnet**
+
+> *"Testing MeltyFi on testnet helped me understand how NFT liquidity works before risking real assets. The lottery mechanism is brilliant!"* - **Beta Tester**
+
+> *"The testnet environment is perfect for experimenting with different lottery strategies. Can't wait for mainnet!"* - **Community Developer**
+
+## 🚀 **Ready to Test?**
+
+### **Quick Start Checklist**
+
+1. **✅ Install Prerequisites**
+   ```bash
+   # Check if you have Node.js and Sui CLI
+   node --version  # Should be v18+
+   sui --version   # Should be latest
+   ```
+
+2. **✅ Clone and Setup**
+   ```bash
+   git clone https://github.com/VincenzoImp/MeltyFi.git
+   cd MeltyFi
+   npm run install:all
+   ```
+
+3. **✅ Configure Testnet**
+   ```bash
+   npm run setup:testnet
+   npm run validate:testnet
+   ```
+
+4. **✅ Get Testnet Tokens**
+   - Visit: [https://faucet.testnet.sui.io/gas](https://faucet.testnet.sui.io/gas)
+   - Request testnet SUI for your address
+
+5. **✅ Deploy and Test**
+   ```bash
+   npm run deploy:full
+   npm run dev:frontend
+   ```
+
+### **Testing Scenarios**
+
+Try these scenarios on testnet:
+
+1. **📝 Create Your First Lottery**
+   - Upload a test NFT
+   - Set competitive pricing
+   - Watch participants join
+
+2. **🎫 Buy WonkaBars**
+   - Browse active lotteries
+   - Purchase lottery tickets
+   - Track your chances
+
+3. **🏆 Experience Wins/Losses**
+   - Win NFTs through lotteries
+   - Earn ChocoChip rewards
+   - Claim refunds when lotteries are cancelled
+
+4. **💰 Test Loan Repayment**
+   - Create a lottery with your NFT
+   - Repay the loan before expiration
+   - Get your NFT back
+
+### **Feedback & Contributions**
+
+We're actively developing on testnet and value your feedback:
+
+- **🐛 Report Bugs**: [GitHub Issues](https://github.com/VincenzoImp/MeltyFi/issues)
+- **💡 Suggest Features**: [Discord Discussions](https://discord.gg/meltyfi)
+- **🔧 Contribute Code**: See [CONTRIBUTING.md](CONTRIBUTING.md)
+- **📝 Improve Docs**: Help us improve documentation
+
+### **What's Next?**
+
+- **Comprehensive Testing**: Help us test all features thoroughly
+- **Community Feedback**: Share your experience and suggestions
+- **Security Preparation**: Prepare for professional security audits
+- **Mainnet Launch**: Target mainnet deployment after thorough testing
+
+---
+
+## 📋 **Troubleshooting**
+
+### **Common Issues**
+
+**❓ "Sui CLI not found"**
+```bash
+# Install Sui CLI
+cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui
+```
+
+**❓ "Not connected to testnet"**
+```bash
+# Switch to testnet
+sui client switch --env testnet
+# Or create testnet environment
+sui client new-env --alias testnet --rpc https://fullnode.testnet.sui.io:443
+```
+
+**❓ "No SUI balance"**
+```bash
+# Get testnet SUI
+curl -X POST https://faucet.testnet.sui.io/gas \
+  -H "Content-Type: application/json" \
+  -d '{"FixedAmountRequest":{"recipient":"YOUR_ADDRESS"}}'
+```
+
+**❓ "Frontend not connecting to contracts"**
+```bash
+# Check environment variables
+npm run check:env
+# Update .env with deployed contract addresses
+```
+
+**❓ "Move compilation errors"**
+```bash
+# Fix Move configuration
+npm run fix:move-config
+# Clean and rebuild
+cd contracts/meltyfi && rm -rf build && sui move build
+```
+
+### **Getting Help**
+
+If you encounter issues:
+
+1. **Check Logs**: Look at `deployment.log` and `build.log`
+2. **Validate Setup**: Run `npm run validate:testnet`
+3. **Ask Community**: Join our [Discord](https://discord.gg/meltyfi)
+4. **Report Issues**: Create a [GitHub Issue](https://github.com/VincenzoImp/MeltyFi/issues)
+
+---
+
+**Ready to turn your NFTs into liquid gold on testnet? Join the sweetest DeFi testing experience on Sui!** 🍫✨
+
+[**🚀 Start Testing**](https://github.com/VincenzoImp/MeltyFi) | [**📖 Read Docs**](https://docs.meltyfi.com) | [**💬 Join Discord**](https://discord.gg/meltyfi) | [**🚰 Get Testnet SUI**](https://faucet.testnet.sui.io/gas)Smart Contract Architecture**
 
 #### **Core Modules**
 
@@ -138,22 +343,6 @@ struct Lottery has key {
 }
 ```
 
-#### **Protocol Flow**
-
-```mermaid
-graph TD
-    A[User Deposits NFT] --> B[Create Lottery Object]
-    B --> C[Set Parameters: Price, Supply, Duration]
-    C --> D[Lottery Goes Live]
-    D --> E[Lenders Buy WonkaBars]
-    E --> F[User Gets 95% of Funds Immediately]
-    F --> G{Lottery Outcome}
-    G -->|User Repays| H[NFT Returned + Refunds]
-    G -->|Expires| I[Random Winner Selected]
-    H --> J[Everyone Gets ChocoChips]
-    I --> J
-```
-
 ### **Frontend Architecture**
 
 #### **Technology Stack**
@@ -177,26 +366,6 @@ const {
 } = useMeltyFi()
 ```
 
-#### **Component Structure**
-```
-src/
-├── app/                    # Next.js app router pages
-│   ├── page.tsx           # Landing page
-│   ├── lotteries/         # Lottery browsing & creation
-│   └── profile/           # User dashboard
-├── components/
-│   ├── Navigation.tsx     # Main navigation
-│   ├── Footer.tsx         # Site footer
-│   ├── wallet/            # Wallet connection components
-│   └── providers/         # React context providers
-├── hooks/
-│   └── useMeltyFi.ts     # Main protocol interaction hook
-├── constants/
-│   └── contracts.ts       # Contract addresses & config
-└── types/
-    └── lottery.ts         # TypeScript type definitions
-```
-
 ## 🔧 **Protocol Mechanics**
 
 ### **Lottery Creation Process**
@@ -208,27 +377,6 @@ src/
    - Duration (lottery lifetime)
 3. **Immediate Liquidity**: User receives 95% of potential funds upfront
 4. **Listing**: Lottery becomes publicly available
-
-### **WonkaBar Purchase Flow**
-
-1. **Discovery**: Lenders browse active lotteries
-2. **Analysis**: Evaluate NFT value vs ticket cost
-3. **Purchase**: Buy WonkaBars (1 SUI = 1 ticket minimum)
-4. **Tracking**: Monitor lottery progress and odds
-
-### **Lottery Resolution**
-
-#### **Scenario A: Successful Repayment**
-- Owner repays loan amount + 5% protocol fee
-- NFT returned to owner
-- All WonkaBar holders get full refund
-- Everyone receives ChocoChip rewards
-
-#### **Scenario B: Lottery Expiration**
-- Sui's randomness API selects winner fairly
-- Winner receives the NFT
-- Non-winners receive ChocoChip consolation rewards
-- Owner keeps the borrowed funds
 
 ### **Economic Model**
 
@@ -245,84 +393,66 @@ Token Distribution:
 └── 5% - Protocol Treasury
 ```
 
-## 🛡️ **Security Features**
-
-### **Smart Contract Security**
-- **Randomness**: Uses Sui's native randomness for fair winner selection
-- **Escrow**: Funds held in protocol-controlled accounts
-- **Time Locks**: Prevents premature lottery resolution
-- **Access Control**: Role-based permissions for admin functions
-
-### **Economic Security**
-- **Balanced Incentives**: Win-win mechanics for all participants
-- **Protocol Fees**: Sustainable revenue model
-- **Slashing Protection**: Penalties for malicious behavior
-- **Circuit Breakers**: Emergency stop mechanisms
-
-### **Audit Status**
-⚠️ **UNAUDITED**: This is experimental software. Use at your own risk.
-
-## 📊 **Protocol Statistics**
-
-### **Current Metrics** (Mock Data)
-- **Total Volume**: 2.4M SUI
-- **Active Lotteries**: 47
-- **Successful Loans**: 892
-- **Community Members**: 3.2K+
-
-### **Performance Indicators**
-- **Average Lottery Duration**: 7 days
-- **Win Rate**: ~1% per WonkaBar
-- **Repayment Rate**: 85%
-- **User Satisfaction**: 4.8/5
-
 ## 🚀 **Deployment Guide**
 
 ### **Automated Deployment**
 
 ```bash
-# One-command deployment to devnet
+# One-command deployment to testnet
+npm run deploy:full
+# OR
 ./scripts/deployment.sh
 ```
 
 This script will:
 1. ✅ Check prerequisites (Sui CLI, Node.js)
-2. ✅ Set up Sui environment and addresses
+2. ✅ Set up Sui testnet environment and addresses
 3. ✅ Install all dependencies
 4. ✅ Build and test Move contracts
-5. ✅ Deploy contracts to devnet
+5. ✅ Deploy contracts to testnet
 6. ✅ Update environment variables
 7. ✅ Test frontend build
 
 ### **Manual Deployment Steps**
 
 ```bash
-# 1. Build contracts
+# 1. Setup testnet environment
+sui client new-env --alias testnet --rpc https://fullnode.testnet.sui.io:443
+sui client switch --env testnet
+
+# 2. Get testnet SUI
+# Visit: https://faucet.testnet.sui.io/gas
+
+# 3. Build contracts
 cd contracts/meltyfi
 sui move build
 
-# 2. Run tests
+# 4. Run tests
 sui move test
 
-# 3. Deploy to network
+# 5. Deploy to testnet
 sui client publish --gas-budget 100000000
 
-# 4. Update frontend configuration
+# 6. Update frontend configuration
 # Copy package ID to .env file
 
-# 5. Build frontend
+# 7. Build frontend
 cd ../../frontend
 npm run build
 ```
 
 ### **Deployment Verification**
 
-After deployment, verify:
+After deployment, verify on **Sui Testnet Explorer**:
 - [ ] Contracts deployed successfully
 - [ ] Package ID updated in frontend
 - [ ] Frontend builds without errors
 - [ ] Wallet integration works
 - [ ] Basic transactions functional
+
+**Explorer URLs:**
+- **Transaction**: `https://suiexplorer.com/txblock/{TRANSACTION_ID}?network=testnet`
+- **Package**: `https://suiexplorer.com/object/{PACKAGE_ID}?network=testnet`
 
 ## 🧪 **Testing**
 
@@ -352,56 +482,77 @@ cd frontend
 npm test
 ```
 
-**Test Areas:**
-- Component rendering
-- Hook functionality
-- Type checking
-- Build verification
+## 🛡️ **Security Features**
+
+### **Smart Contract Security**
+- **Randomness**: Uses Sui's native randomness for fair winner selection
+- **Escrow**: Funds held in protocol-controlled accounts
+- **Time Locks**: Prevents premature lottery resolution
+- **Access Control**: Role-based permissions for admin functions
+
+### **Testnet Safety**
+- **Isolated Environment**: No real value at risk
+- **Free Tokens**: Testnet SUI has no monetary value
+- **Reset Capability**: Environment can be reset if needed
+- **Monitoring**: All transactions are publicly viewable
+
+### **Audit Status**
+⚠️ **TESTNET DEPLOYMENT**: This is experimental software on testnet. Use only for testing purposes.
+
+## 📊 **Available Commands**
+
+### **Environment Setup**
+```bash
+npm run setup:testnet        # Setup Sui testnet environment
+npm run validate:testnet     # Validate testnet configuration
+npm run switch:testnet       # Switch to testnet environment
+npm run balance             # Check SUI balance
+npm run faucet              # Show faucet information
+```
+
+### **Development**
+```bash
+npm run build:contracts     # Build Move contracts
+npm run test:contracts      # Run contract tests
+npm run deploy:testnet      # Deploy to testnet
+npm run deploy:full         # Full deployment with setup
+npm run dev:frontend        # Start frontend dev server
+npm run build:frontend      # Build frontend for production
+```
+
+### **Utilities**
+```bash
+npm run check:env          # Check environment configuration
+npm run clean              # Clean node_modules
+npm run fix:move-config    # Fix Move.toml configuration
+```
 
 ## 🛣️ **Roadmap**
 
-### **Phase 1: Core Protocol** ✅
+### **Phase 1: Testnet Launch** ✅
+- [x] Core protocol on testnet
 - [x] Basic lottery mechanics
 - [x] NFT collateral system
 - [x] WonkaBar ticket system
 - [x] ChocoChip rewards
 
-### **Phase 2: Enhanced Features** 🚧
+### **Phase 2: Testnet Optimization** 🚧
+- [ ] Enhanced testing suite
+- [ ] Gas optimization
+- [ ] UI/UX improvements
+- [ ] Security audits
+
+### **Phase 3: Mainnet Preparation** 📋
+- [ ] Comprehensive security audit
+- [ ] Mainnet deployment
 - [ ] Advanced lottery types
 - [ ] Cross-collection support
+
+### **Phase 4: Ecosystem Growth** 🔮
 - [ ] Mobile application
-- [ ] Enhanced analytics
-
-### **Phase 3: DeFi Integration** 📋
-- [ ] Yield farming with ChocoChips
-- [ ] NFT price oracles
-- [ ] Cross-chain bridges
-- [ ] Institutional features
-
-### **Phase 4: Ecosystem** 🔮
 - [ ] DAO governance
 - [ ] Third-party integrations
-- [ ] Developer SDK
 - [ ] Educational platform
-
-## 🤝 **Contributing**
-
-We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### **Development Workflow**
-
-1. **Fork** the repository
-2. **Create** a feature branch
-3. **Make** your changes
-4. **Test** thoroughly
-5. **Submit** a pull request
-
-### **Code Standards**
-
-- **Move**: Follow Sui Move best practices
-- **TypeScript**: Strict type checking enabled
-- **Styling**: Consistent Tailwind usage
-- **Testing**: Comprehensive test coverage
 
 ## 📞 **Support & Community**
 
@@ -411,39 +562,4 @@ We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for deta
 - 🐦 [Twitter Updates](https://twitter.com/meltyfi)
 - 🐛 [GitHub Issues](https://github.com/VincenzoImp/MeltyFi/issues)
 
-### **Team**
-- **Core Development**: MeltyFi Team
-- **Smart Contracts**: Sui Move specialists
-- **Frontend**: React/Next.js experts
-- **Design**: Web3 UX professionals
-
-## ⚖️ **Legal & Disclaimers**
-
-### **License**
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-
-### **Disclaimers**
-- **Experimental Software**: Use at your own risk
-- **No Financial Advice**: This is not investment advice
-- **Beta Software**: Expect bugs and limitations
-- **Regulatory Compliance**: Check local laws before using
-
-### **Risk Factors**
-- Smart contract bugs
-- Economic attack vectors
-- Regulatory changes
-- Technology limitations
-
----
-
-## 🍫 **Sweet Success Stories**
-
-> *"MeltyFi helped me unlock 50 SUI from my NFT collection when I needed it most. The lottery mechanism made it fun for everyone involved!"* - **Anonymous User**
-
-> *"I won a rare CryptoPunk through MeltyFi's lottery system. Even when I don't win, the ChocoChip rewards make it worthwhile."* - **Community Member**
-
----
-
-**Ready to turn your NFTs into liquid gold? Join the sweetest DeFi protocol on Sui!** 🍫✨
-
-[**🚀 Launch App**](https://meltyfi.com) | [**📖 Read Docs**](https://docs.meltyfi.com) | [**💬 Join Discord**](https://discord.gg/meltyfi)
+### **

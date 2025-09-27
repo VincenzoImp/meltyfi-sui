@@ -1,7 +1,9 @@
 'use client'
 
+import { getFaucetUrl, getNetworkDisplayName, isTestnet } from "@/constants/contracts"
 import { cn } from "@/lib/utils"
 import {
+    AlertTriangle,
     ChevronDown,
     ExternalLink,
     Github,
@@ -135,9 +137,18 @@ export function Navigation() {
                             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
                                 <Sparkles className="w-5 h-5 text-white" />
                             </div>
-                            <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-                                MeltyFi
-                            </span>
+                            <div className="flex flex-col">
+                                <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+                                    MeltyFi
+                                </span>
+                                {/* Network indicator */}
+                                {isTestnet() && (
+                                    <span className="text-xs text-yellow-400 flex items-center gap-1">
+                                        <AlertTriangle className="w-3 h-3" />
+                                        {getNetworkDisplayName()}
+                                    </span>
+                                )}
+                            </div>
                         </Link>
 
                         {/* Desktop Navigation */}
@@ -178,6 +189,18 @@ export function Navigation() {
                                                 <span>{item.label}</span>
                                             </Link>
                                         ))}
+                                        {/* Testnet Faucet Link */}
+                                        {isTestnet() && getFaucetUrl() && (
+                                            <Link
+                                                href={getFaucetUrl()!}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm text-yellow-400 hover:bg-white/10 hover:text-yellow-300 transition-all duration-200"
+                                            >
+                                                <Wallet className="h-4 w-4" />
+                                                <span>Get Testnet SUI</span>
+                                            </Link>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -185,6 +208,13 @@ export function Navigation() {
 
                         {/* Desktop Actions */}
                         <div className="hidden md:flex items-center space-x-4">
+                            {/* Network Badge */}
+                            {isTestnet() && (
+                                <div className="rounded-lg border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs text-yellow-400 font-medium">
+                                    Testnet
+                                </div>
+                            )}
+
                             {isConnected ? (
                                 <div className="flex items-center space-x-3">
                                     <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-2">
@@ -236,6 +266,28 @@ export function Navigation() {
                     <div className="fixed top-[65px] right-6 w-80 z-50 md:hidden">
                         <div className="rounded-lg border border-white/10 bg-gray-900/95 backdrop-blur-lg p-6 shadow-xl">
                             <div className="space-y-4">
+                                {/* Network Status */}
+                                {isTestnet() && (
+                                    <div className="pb-4 border-b border-white/10">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-yellow-400 font-medium text-sm">
+                                                {getNetworkDisplayName()}
+                                            </span>
+                                            <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                                        </div>
+                                        {getFaucetUrl() && (
+                                            <Link
+                                                href={getFaucetUrl()!}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="mt-2 text-xs text-yellow-400/70 hover:text-yellow-400 underline"
+                                            >
+                                                Get testnet SUI tokens
+                                            </Link>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Mobile Wallet Section */}
                                 <div className="pb-4 border-b border-white/10">
                                     {isConnected ? (

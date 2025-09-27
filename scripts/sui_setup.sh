@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Enhanced Sui Environment Setup Script for MeltyFi
-# Comprehensive setup with error handling and validation
+# Enhanced Sui Environment Setup Script for MeltyFi - TESTNET
+# Comprehensive setup with error handling and validation for testnet
 
 set -e  # Exit on any error
 
-echo "🔧 Setting up Sui environment for MeltyFi..."
+echo "🔧 Setting up Sui testnet environment for MeltyFi..."
 
 # Colors and formatting
 GREEN='\033[0;32m'
@@ -49,13 +49,13 @@ print_header() {
     echo -e "${BOLD}${PURPLE}"
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║                    🍫 MeltyFi Setup                        ║"
-    echo "║               Sui Environment Configuration                ║"
+    echo "║             Sui Testnet Environment Configuration          ║"
     echo "╚════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 }
 
 # Initialize logging
-echo "Sui environment setup started at $(date)" > "$LOG_FILE"
+echo "Sui testnet environment setup started at $(date)" > "$LOG_FILE"
 
 # Error handling
 handle_error() {
@@ -80,7 +80,7 @@ check_prerequisites() {
         print_error "Sui CLI not found!"
         echo
         print_info "Please install Sui CLI first:"
-        echo -e "${YELLOW}cargo install --locked --git https://github.com/MystenLabs/sui.git --branch devnet sui${NC}"
+        echo -e "${YELLOW}cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui${NC}"
         echo
         print_info "Or use the install script:"
         echo -e "${YELLOW}curl -fsSL https://github.com/MystenLabs/sui/raw/main/scripts/install.sh | bash${NC}"
@@ -98,37 +98,37 @@ check_prerequisites() {
     print_status "Sui CLI found: $sui_version"
 }
 
-# Configure Sui client
+# Configure Sui client for testnet
 configure_sui_client() {
-    print_step "Configuring Sui client..."
+    print_step "Configuring Sui client for testnet..."
     
-    # Add devnet environment (check if it exists first)
-    print_info "Configuring devnet environment..."
-    if sui client envs 2>/dev/null | grep -q "devnet"; then
-        print_info "Devnet environment already exists"
+    # Add testnet environment (check if it exists first)
+    print_info "Configuring testnet environment..."
+    if sui client envs 2>/dev/null | grep -q "testnet"; then
+        print_info "Testnet environment already exists"
     else
-        print_info "Adding devnet environment..."
-        if sui client new-env --alias devnet --rpc https://fullnode.devnet.sui.io:443; then
-            print_status "Devnet environment added"
+        print_info "Adding testnet environment..."
+        if sui client new-env --alias testnet --rpc https://fullnode.testnet.sui.io:443; then
+            print_status "Testnet environment added"
         else
-            handle_error "Failed to add devnet environment"
+            handle_error "Failed to add testnet environment"
         fi
     fi
     
-    # Switch to devnet
-    print_info "Switching to devnet..."
-    if sui client switch --env devnet; then
-        print_status "Switched to devnet"
+    # Switch to testnet
+    print_info "Switching to testnet..."
+    if sui client switch --env testnet; then
+        print_status "Switched to testnet"
     else
-        handle_error "Failed to switch to devnet"
+        handle_error "Failed to switch to testnet"
     fi
     
     # Verify environment
     local current_env=$(sui client active-env 2>/dev/null || echo "unknown")
-    if [ "$current_env" = "devnet" ]; then
-        print_status "Successfully configured for devnet"
+    if [ "$current_env" = "testnet" ]; then
+        print_status "Successfully configured for testnet"
     else
-        print_warning "Current environment: $current_env (expected: devnet)"
+        print_warning "Current environment: $current_env (expected: testnet)"
     fi
 }
 
@@ -200,15 +200,15 @@ check_balance_and_faucet() {
         print_info ""
         print_info "🚰 Getting testnet SUI tokens:"
         print_info "════════════════════════════════════"
-        print_info "Option 1 - Discord Faucet (Recommended):"
-        print_info "  1. Join Sui Discord: https://discord.gg/sui"
-        print_info "  2. Go to #devnet-faucet channel"
-        print_info "  3. Use command: !faucet $current_address"
-        print_info ""
-        print_info "Option 2 - Web Faucet:"
-        print_info "  1. Visit: https://faucet.devnet.sui.io"
+        print_info "Option 1 - Web Faucet (Recommended):"
+        print_info "  1. Visit: https://faucet.testnet.sui.io"
         print_info "  2. Enter your address: $current_address"
         print_info "  3. Complete captcha and request tokens"
+        print_info ""
+        print_info "Option 2 - Discord Faucet:"
+        print_info "  1. Join Sui Discord: https://discord.gg/sui"
+        print_info "  2. Go to #testnet-faucet channel"
+        print_info "  3. Use command: !faucet $current_address"
         print_info ""
         print_info "Option 3 - CLI Faucet:"
         print_info "  Run: sui client faucet"
@@ -216,8 +216,8 @@ check_balance_and_faucet() {
         
         # Interactive faucet process
         echo -e "${YELLOW}Choose your preferred method:${NC}"
-        echo "1) I'll use Discord faucet"
-        echo "2) I'll use Web faucet"  
+        echo "1) I'll use Web faucet"  
+        echo "2) I'll use Discord faucet"
         echo "3) Use CLI faucet now"
         echo "4) Skip for now"
         
@@ -225,23 +225,23 @@ check_balance_and_faucet() {
         
         case $choice in
             1)
-                print_info "Great! Use Discord faucet with address: $current_address"
-                ;;
-            2)
                 print_info "Opening web faucet..."
                 if command -v open &> /dev/null; then
-                    open "https://faucet.devnet.sui.io"
+                    open "https://faucet.testnet.sui.io"
                 elif command -v xdg-open &> /dev/null; then
-                    xdg-open "https://faucet.devnet.sui.io"
+                    xdg-open "https://faucet.testnet.sui.io"
                 fi
                 print_info "Use address: $current_address"
+                ;;
+            2)
+                print_info "Great! Use Discord faucet with address: $current_address"
                 ;;
             3)
                 print_info "Requesting tokens via CLI..."
                 if sui client faucet; then
                     print_status "CLI faucet request sent"
                 else
-                    print_warning "CLI faucet failed, try Discord or web faucet"
+                    print_warning "CLI faucet failed, try web or Discord faucet"
                 fi
                 ;;
             4)
@@ -249,7 +249,7 @@ check_balance_and_faucet() {
                 return 0
                 ;;
             *)
-                print_warning "Invalid choice. Please use Discord or web faucet manually."
+                print_warning "Invalid choice. Please use web or Discord faucet manually."
                 ;;
         esac
         
@@ -313,7 +313,7 @@ display_summary() {
     echo -e "Environment:  ${GREEN}$current_env${NC}"
     echo -e "Address:      ${GREEN}$current_address${NC}"
     echo -e "Balance:      ${GREEN}$balance_sui SUI${NC}"
-    echo -e "RPC URL:      ${GREEN}https://fullnode.devnet.sui.io:443${NC}"
+    echo -e "RPC URL:      ${GREEN}https://fullnode.testnet.sui.io:443${NC}"
     echo "═══════════════════════════════════════"
     echo
 }
@@ -322,8 +322,8 @@ display_summary() {
 main() {
     print_header
     
-    print_info "Starting Sui environment setup for MeltyFi protocol..."
-    print_info "This script will configure your Sui CLI for devnet deployment."
+    print_info "Starting Sui testnet environment setup for MeltyFi protocol..."
+    print_info "This script will configure your Sui CLI for testnet deployment."
     echo
     
     check_prerequisites
@@ -332,11 +332,11 @@ main() {
     check_balance_and_faucet
     display_summary
     
-    print_status "🎉 Sui environment setup complete!"
+    print_status "🎉 Sui testnet environment setup complete!"
     print_info ""
     print_info "Next steps:"
     print_info "1. Run the deployment script: ./scripts/deployment.sh"
-    print_info "2. Or use the project scripts: npm run deploy:devnet"
+    print_info "2. Or use the project scripts: npm run deploy:testnet"
     print_info ""
     print_info "For troubleshooting, check the log: $LOG_FILE"
     
