@@ -1,18 +1,20 @@
 'use client';
 
 import {
+    CHOCO_CHIP_TYPE,
     MELTYFI_PACKAGE_ID,
     PROTOCOL_OBJECT_ID,
     WONKA_BAR_TYPE
 } from '@/constants/contracts';
 import {
     useCurrentAccount,
-    useSignAndExecuteTransaction, // Changed from useSignAndExecuteTransactionBlock
+    useSignAndExecuteTransaction,
     useSuiClient
 } from '@mysten/dapp-kit';
 import type { SuiObjectResponse } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { toast } from 'sonner';
 
 export interface Lottery {
@@ -20,16 +22,20 @@ export interface Lottery {
     lotteryId: string;
     owner: string;
     state: 'ACTIVE' | 'CANCELLED' | 'CONCLUDED';
+    createdAt: number;
     expirationDate: number;
     wonkaBarPrice: string;
     maxSupply: string;
     soldCount: string;
+    totalRaised: string;
     winner?: string;
+    winningTicket?: string;
     collateralNft: {
         id: string;
         name: string;
         imageUrl: string;
         collection?: string;
+        type?: string;
     };
     participants: number;
 }
@@ -38,36 +44,105 @@ export interface WonkaBar {
     id: string;
     lotteryId: string;
     owner: string;
-    wonNumber: string;
+    ticketCount: string;
+    purchasedAt: number;
+}
+
+export interface UserStats {
+    activeLotteries: number;
+    totalLotteries: number;
+    totalWonkaBars: number;
+    chocoChipBalance: string;
+    suiBalance: string;
+}
+
+// Helper function to parse object content
+function parseObjectContent(obj: SuiObjectResponse): any {
+    if (obj.data?.content?.dataType === 'moveObject') {
+        return (obj.data.content as any).fields;
+    }
+    return null;
+}
+
+// Parse WonkaBar object
+function parseWonkaBar(obj: SuiObjectResponse): WonkaBar | null {
+    const fields = parseObjectContent(obj);
+    if (!fields || !obj.data?.objectId) return null;
+
+    try {
+        return {
+            id: obj.data.objectId,
+            lotteryId: fields.lottery_id?.toString() || '0',
+            owner: fields.owner || '',
+            ticketCount: fields.ticket_count?.toString() || '1',
+            purchasedAt: parseInt(fields.purchased_at || '0')
+        };
+    } catch (error) {
+        console.error('Error parsing WonkaBar:', error);
+        return null;
+    }
 }
 
 export function useMeltyFi() {
     const currentAccount = useCurrentAccount();
     const suiClient = useSuiClient();
     const queryClient = useQueryClient();
-    const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction(); // Changed name
+    const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
     // Fetch all lotteries
     const { data: lotteries = [], isLoading: isLoadingLotteries } = useQuery({
         queryKey: ['lotteries'],
         queryFn: async () => {
-            // Implementation to fetch lotteries from blockchain
-            const objects = await suiClient.getOwnedObjects({
-                owner: PROTOCOL_OBJECT_ID,
-                options: {
-                    showContent: true,
-                    showDisplay: true,
-                    showType: true,
-                },
-            });
+            try {
+                // Fetch lottery creation events
+                const objects = await suiClient.queryEvents({
+                    query: {
+                        MoveEventType: `${MELTYFI_PACKAGE_ID}::core::LotteryCreated`
+                    },
+                    limit: 100,
+                    order: 'descending'
+                });
 
-            // Parse and transform lottery data
-            return objects.data.map((obj: SuiObjectResponse) => {
-                // Your parsing logic here
-                return {} as Lottery;
-            });
+                // Get lottery objects from events
+                const lotteryPromises = objects.data.map(async (event) => {
+                    try {
+                        const parsedJson = event.parsedJson as any;
+                        if (parsedJson?.lottery_id) {
+                            return {
+                                id: `lottery_${parsedJson.lottery_id}`,
+                                lotteryId: parsedJson.lottery_id?.toString() || '0',
+                                owner: parsedJson.owner || '',
+                                state: 'ACTIVE' as const,
+                                createdAt: Date.now(),
+                                expirationDate: parseInt(parsedJson.expiration_date || '0'),
+                                wonkaBarPrice: parsedJson.wonka_price?.toString() || '0',
+                                maxSupply: parsedJson.max_supply?.toString() || '0',
+                                soldCount: '0',
+                                totalRaised: '0',
+                                collateralNft: {
+                                    id: 'nft_placeholder',
+                                    name: 'Collateral NFT',
+                                    imageUrl: '/placeholder-nft.png',
+                                    collection: 'Unknown'
+                                },
+                                participants: 0
+                            } as Lottery;
+                        }
+                        return null;
+                    } catch (err) {
+                        console.error('Error processing lottery event:', err);
+                        return null;
+                    }
+                });
+
+                const resolved = await Promise.all(lotteryPromises);
+                return resolved.filter((lottery): lottery is Lottery => lottery !== null);
+            } catch (error) {
+                console.error('Error fetching lotteries:', error);
+                return [];
+            }
         },
-        refetchInterval: 10000, // Refetch every 10 seconds
+        refetchInterval: 10000,
     });
 
     // Fetch user's WonkaBars
@@ -76,48 +151,110 @@ export function useMeltyFi() {
         queryFn: async () => {
             if (!currentAccount?.address) return [];
 
-            const objects = await suiClient.getOwnedObjects({
-                owner: currentAccount.address,
-                filter: { StructType: WONKA_BAR_TYPE },
-                options: {
-                    showContent: true,
-                    showDisplay: true,
-                    showType: true,
-                },
-            });
+            try {
+                const objects = await suiClient.getOwnedObjects({
+                    owner: currentAccount.address,
+                    filter: { StructType: WONKA_BAR_TYPE },
+                    options: {
+                        showContent: true,
+                        showDisplay: true,
+                        showType: true,
+                    },
+                });
 
-            return objects.data.map((obj: SuiObjectResponse) => {
-                // Your parsing logic here
-                return {} as WonkaBar;
-            });
+                return objects.data
+                    .map(parseWonkaBar)
+                    .filter((wonkaBar): wonkaBar is WonkaBar => wonkaBar !== null);
+            } catch (error) {
+                console.error('Error fetching WonkaBars:', error);
+                return [];
+            }
         },
         enabled: !!currentAccount?.address,
-        refetchInterval: 10000,
+        refetchInterval: 15000,
     });
+
+    // Fetch user's ChocoChip balance
+    const { data: chocoChipBalance = '0' } = useQuery({
+        queryKey: ['chocoChipBalance', currentAccount?.address],
+        queryFn: async () => {
+            if (!currentAccount?.address) return '0';
+
+            try {
+                const balance = await suiClient.getBalance({
+                    owner: currentAccount.address,
+                    coinType: CHOCO_CHIP_TYPE,
+                });
+                return balance.totalBalance;
+            } catch (error) {
+                console.error('Error fetching ChocoChip balance:', error);
+                return '0';
+            }
+        },
+        enabled: !!currentAccount?.address,
+    });
+
+    // Fetch user's SUI balance
+    const { data: suiBalance = '0' } = useQuery({
+        queryKey: ['suiBalance', currentAccount?.address],
+        queryFn: async () => {
+            if (!currentAccount?.address) return '0';
+
+            try {
+                const balance = await suiClient.getBalance({
+                    owner: currentAccount.address,
+                });
+                return balance.totalBalance;
+            } catch (error) {
+                console.error('Error fetching SUI balance:', error);
+                return '0';
+            }
+        },
+        enabled: !!currentAccount?.address,
+    });
+
+    // Calculate user stats
+    const userStats = useMemo((): UserStats | null => {
+        if (!currentAccount?.address) return null;
+
+        const userLotteries = lotteries.filter(lottery => lottery.owner === currentAccount.address);
+        const activeLotteries = userLotteries.filter(lottery =>
+            lottery.state === 'ACTIVE' && Date.now() < lottery.expirationDate
+        );
+
+        return {
+            activeLotteries: activeLotteries.length,
+            totalLotteries: userLotteries.length,
+            totalWonkaBars: userWonkaBars.length,
+            chocoChipBalance,
+            suiBalance,
+        };
+    }, [lotteries, userWonkaBars, chocoChipBalance, suiBalance, currentAccount?.address]);
 
     // Create lottery mutation
     const { mutateAsync: createLottery, isPending: isCreatingLottery } = useMutation({
         mutationFn: async ({
             nftId,
+            expirationDate,
             wonkaBarPrice,
             maxSupply,
-            expirationDate, // Renamed from 'duration' to be more accurate
         }: {
             nftId: string;
+            expirationDate: number;
             wonkaBarPrice: string;
             maxSupply: string;
-            expirationDate: string; // Absolute timestamp as string
         }) => {
             if (!currentAccount?.address) throw new Error('Wallet not connected');
 
             const tx = new Transaction();
 
+            // Note: This is a simplified version - you'll need to adjust based on your actual Move function signature
             tx.moveCall({
                 target: `${MELTYFI_PACKAGE_ID}::core::create_lottery`,
                 arguments: [
                     tx.object(PROTOCOL_OBJECT_ID),
                     tx.object(nftId),
-                    tx.pure.u64(expirationDate), // Convert string to u64 for Move contract
+                    tx.pure.u64(expirationDate),
                     tx.pure.u64(wonkaBarPrice),
                     tx.pure.u64(maxSupply),
                     tx.object('0x6'), // Clock object
@@ -136,6 +273,7 @@ export function useMeltyFi() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['lotteries'] });
+            queryClient.invalidateQueries({ queryKey: ['suiBalance'] });
             toast.success('Lottery created successfully!');
         },
         onError: (error) => {
@@ -160,18 +298,18 @@ export function useMeltyFi() {
             const tx = new Transaction();
 
             tx.moveCall({
-                target: `${MELTYFI_PACKAGE_ID}::core::buy_wonkabar`,
+                target: `${MELTYFI_PACKAGE_ID}::core::buy_wonka_bars`,
                 arguments: [
                     tx.object(PROTOCOL_OBJECT_ID),
                     tx.object(lotteryId),
-                    tx.pure.u64(quantity),
                     tx.object(payment),
+                    tx.pure.u64(quantity),
+                    tx.object('0x6'), // Clock object
                 ],
             });
 
-            // Changed: use the new API
             const result = await signAndExecuteTransaction({
-                transaction: tx, // Changed from transactionBlock
+                transaction: tx,
                 options: {
                     showEffects: true,
                     showObjectChanges: true,
@@ -183,6 +321,7 @@ export function useMeltyFi() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['lotteries'] });
             queryClient.invalidateQueries({ queryKey: ['wonkaBars'] });
+            queryClient.invalidateQueries({ queryKey: ['suiBalance'] });
             toast.success('WonkaBars purchased successfully!');
         },
         onError: (error) => {
@@ -191,7 +330,45 @@ export function useMeltyFi() {
         },
     });
 
-    // Redeem WonkaBar mutation
+    // Resolve lottery mutation (for lottery owners or admin)
+    const { mutateAsync: resolveLottery, isPending: isResolvingLottery } = useMutation({
+        mutationFn: async ({ lotteryId }: { lotteryId: string }) => {
+            if (!currentAccount?.address) throw new Error('Wallet not connected');
+
+            const tx = new Transaction();
+
+            tx.moveCall({
+                target: `${MELTYFI_PACKAGE_ID}::core::resolve_lottery`,
+                arguments: [
+                    tx.object(PROTOCOL_OBJECT_ID),
+                    tx.object(lotteryId),
+                    tx.object('0x8'), // Random object
+                    tx.object('0x6'), // Clock object
+                ],
+            });
+
+            const result = await signAndExecuteTransaction({
+                transaction: tx,
+                options: {
+                    showEffects: true,
+                    showObjectChanges: true,
+                },
+            });
+
+            return result;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['lotteries'] });
+            queryClient.invalidateQueries({ queryKey: ['wonkaBars'] });
+            toast.success('Lottery resolved successfully!');
+        },
+        onError: (error) => {
+            console.error('Error resolving lottery:', error);
+            toast.error('Failed to resolve lottery');
+        },
+    });
+
+    // Redeem WonkaBar mutation (for winners)
     const { mutateAsync: redeemWonkaBars, isPending: isRedeemingWonkaBars } = useMutation({
         mutationFn: async ({
             lotteryId,
@@ -204,8 +381,9 @@ export function useMeltyFi() {
 
             const tx = new Transaction();
 
+            // This function would need to be implemented in your Move contract
             tx.moveCall({
-                target: `${MELTYFI_PACKAGE_ID}::core::redeem_wonkabar`,
+                target: `${MELTYFI_PACKAGE_ID}::core::redeem_wonka_bar`,
                 arguments: [
                     tx.object(PROTOCOL_OBJECT_ID),
                     tx.object(lotteryId),
@@ -213,9 +391,8 @@ export function useMeltyFi() {
                 ],
             });
 
-            // Changed: use the new API
             const result = await signAndExecuteTransaction({
-                transaction: tx, // Changed from transactionBlock
+                transaction: tx,
                 options: {
                     showEffects: true,
                     showObjectChanges: true,
@@ -227,7 +404,8 @@ export function useMeltyFi() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['lotteries'] });
             queryClient.invalidateQueries({ queryKey: ['wonkaBars'] });
-            queryClient.invalidateQueries({ queryKey: ['balance'] });
+            queryClient.invalidateQueries({ queryKey: ['suiBalance'] });
+            queryClient.invalidateQueries({ queryKey: ['chocoChipBalance'] });
             toast.success('WonkaBar redeemed successfully!');
         },
         onError: (error) => {
@@ -240,6 +418,7 @@ export function useMeltyFi() {
         // Data
         lotteries,
         userWonkaBars,
+        userStats,
 
         // Loading states
         isLoadingLotteries,
@@ -250,6 +429,8 @@ export function useMeltyFi() {
         isCreatingLottery,
         buyWonkaBars,
         isBuyingWonkaBars,
+        resolveLottery,
+        isResolvingLottery,
         redeemWonkaBars,
         isRedeemingWonkaBars,
     };

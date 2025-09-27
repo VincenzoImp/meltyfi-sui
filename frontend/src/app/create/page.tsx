@@ -92,6 +92,7 @@ export default function CreateLotteryPage() {
         if (!selectedNFT) return;
 
         try {
+            // Convert to mist (1 SUI = 1_000_000_000 mist)
             const wonkaBarPriceMist = (parseFloat(wonkaBarPrice) * 1_000_000_000).toString();
 
             // Calculate absolute expiration timestamp
@@ -102,7 +103,7 @@ export default function CreateLotteryPage() {
                 nftId: selectedNFT.id,
                 wonkaBarPrice: wonkaBarPriceMist,
                 maxSupply,
-                expirationDate: expirationTimestamp.toString() // Pass absolute timestamp as string
+                expirationDate: expirationTimestamp // Pass as number, not string
             });
 
             // Reset form
@@ -114,6 +115,7 @@ export default function CreateLotteryPage() {
             console.error('Failed to create lottery:', error);
         }
     };
+
     const estimatedLiquidity = parseFloat(wonkaBarPrice) * parseInt(maxSupply) * 0.95; // 95% upfront
     const protocolFee = parseFloat(wonkaBarPrice) * parseInt(maxSupply) * 0.05; // 5% fee
 

@@ -323,7 +323,7 @@ export default function ProfilePage() {
                                         <div className="flex items-center justify-between mb-3">
                                             <Ticket className="w-6 h-6 text-pink-400" />
                                             <span className="text-xs text-white/60">
-                                                Qty: {wonkaBar.quantity}
+                                                Qty: {wonkaBar.ticketCount}
                                             </span>
                                         </div>
 
