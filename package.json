@@ -12,18 +12,25 @@
     "build:contracts": "cd contracts/meltyfi && sui move build",
     "test:contracts": "cd contracts/meltyfi && sui move test",
     "deploy:testnet": "cd contracts/meltyfi && sui client publish --gas-budget 100000000",
+    "dev": "npm run dev:frontend",
     "dev:frontend": "cd frontend && npm run dev",
     "build:frontend": "cd frontend && npm run build",
     "start": "npm run dev:frontend",
     "setup:testnet": "./scripts/sui_setup.sh",
     "validate:testnet": "./scripts/sui_validation.sh",
-    "deploy:full": "./scripts/deployment.sh",
+    "deploy:auto": "./scripts/auto_deploy.sh",
+    "deploy:clean": "./scripts/auto_deploy.sh --clean",
+    "deploy:force": "./scripts/auto_deploy.sh --force",
+    "deploy:help": "./scripts/auto_deploy.sh --help",
     "fix:move-config": "cd contracts/meltyfi && find sources -name '*.move' -exec sed -i '' -e 's/use sui::transfer;//g' -e 's/use sui::tx_context::{Self, TxContext};//g' -e 's/use sui::object::{Self, UID, ID};//g' {} +",
     "cleanup": "./scripts/cleanup_lockfiles.sh",
-    "check:env": "echo 'Checking environment configuration...' && grep -E 'NEXT_PUBLIC_SUI_NETWORK|NEXT_PUBLIC_SUI_RPC_URL' .env || echo 'No .env file found'",
     "switch:testnet": "sui client switch --env testnet && echo 'Switched to testnet environment'",
     "balance": "sui client balance",
-    "faucet": "echo 'Get testnet SUI from: https://faucet.testnet.sui.io'"
+    "faucet": "echo 'Get testnet SUI from: https://faucet.testnet.sui.io'",
+    "status": "echo '📊 MeltyFi Status:' && echo '├─ Network:' $(sui client active-env 2>/dev/null || echo 'unknown') && echo '├─ Address:' $(sui client active-address 2>/dev/null | head -c 10)... && echo '└─ Balance:' $(sui client balance 2>/dev/null | grep -oE '[0-9]+(\\.\\.[0-9]+)?\\s*SUI' | head -1 || echo 'unknown')",
+    "explorer": "echo 'Open in browser:' && echo '🔍 Sui Explorer: https://suiscan.xyz/testnet/home' && echo '🚰 Testnet Faucet: https://faucet.testnet.sui.io'",
+    "logs": "tail -f deployment.log 2>/dev/null || echo 'No deployment logs found'",
+    "update:deps": "npm update && cd frontend && npm update"
   },
   "repository": {
     "type": "git",
@@ -36,12 +43,15 @@
     "blockchain",
     "lottery",
     "liquidity",
-    "testnet"
+    "testnet",
+    "automated-deployment",
+    "web3",
+    "nextjs"
   ],
   "author": "MeltyFi Team",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "npm": ">=9.0.0"
   }
 }

@@ -1,0 +1,494 @@
+[Note]: Dependency sources are no longer verified automatically during publication and upgrade. You can pass the `--verify-deps` option if you would like to verify them as part of publication or upgrade.
+[note] Dependencies on Bridge, MoveStdlib, Sui, and SuiSystem are automatically added, but this feature is disabled for your package because you have explicitly included dependencies on Sui. Consider removing these dependencies from Move.toml.
+UPDATING GIT DEPENDENCY https://github.com/MystenLabs/sui.git
+INCLUDING DEPENDENCY Sui
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING meltyfi
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/meltyfi.move:8:26
+  [0m[34m│[0m
+[0m[34m8[0m [0m[34m│[0m     use sui::tx_context::[0m[33mTxContext[0m;
+  [0m[34m│[0m                          [0m[33m^^^^^^^^^[0m [0m[33mUnnecessary alias 'TxContext' for module member 'sui::tx_context::TxContext'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/meltyfi.move:9:22
+  [0m[34m│[0m
+[0m[34m9[0m [0m[34m│[0m     use std::option::[0m[33mOption[0m;
+  [0m[34m│[0m                      [0m[33m^^^^^^[0m [0m[33mUnnecessary alias 'Option' for module member 'std::option::Option'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/choco_chip.move:4:27
+  [0m[34m│[0m
+[0m[34m4[0m [0m[34m│[0m     use sui::tx_context::{[0m[33mSelf[0m, TxContext};
+  [0m[34m│[0m                           [0m[33m^^^^[0m [0m[33mUnnecessary alias 'tx_context' for module 'sui::tx_context'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/choco_chip.move:4:33
+  [0m[34m│[0m
+[0m[34m4[0m [0m[34m│[0m     use sui::tx_context::{Self, [0m[33mTxContext[0m};
+  [0m[34m│[0m                                 [0m[33m^^^^^^^^^[0m [0m[33mUnnecessary alias 'TxContext' for module member 'sui::tx_context::TxContext'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/choco_chip.move:5:14
+  [0m[34m│[0m
+[0m[34m5[0m [0m[34m│[0m     use sui::[0m[33mtransfer[0m;
+  [0m[34m│[0m              [0m[33m^^^^^^^^[0m [0m[33mUnnecessary alias 'transfer' for module 'sui::transfer'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/choco_chip.move:6:23
+  [0m[34m│[0m
+[0m[34m6[0m [0m[34m│[0m     use sui::object::{[0m[33mSelf[0m, UID};
+  [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnnecessary alias 'object' for module 'sui::object'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/choco_chip.move:6:29
+  [0m[34m│[0m
+[0m[34m6[0m [0m[34m│[0m     use sui::object::{Self, [0m[33mUID[0m};
+  [0m[34m│[0m                             [0m[33m^^^[0m [0m[33mUnnecessary alias 'UID' for module member 'sui::object::UID'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/choco_chip.move:9:14
+  [0m[34m│[0m
+[0m[34m9[0m [0m[34m│[0m     use std::[0m[33mvector[0m;
+  [0m[34m│[0m              [0m[33m^^^^^^[0m [0m[33mUnnecessary alias 'vector' for module 'std::vector'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/choco_chip.move:10:14
+   [0m[34m│[0m
+[0m[34m10[0m [0m[34m│[0m     use std::[0m[33moption[0m;
+   [0m[34m│[0m              [0m[33m^^^^^^[0m [0m[33mUnnecessary alias 'option' for module 'std::option'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:3:23
+  [0m[34m│[0m
+[0m[34m3[0m [0m[34m│[0m     use sui::object::{[0m[33mSelf[0m, UID, ID};
+  [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnnecessary alias 'object' for module 'sui::object'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:3:29
+  [0m[34m│[0m
+[0m[34m3[0m [0m[34m│[0m     use sui::object::{Self, [0m[33mUID[0m, ID};
+  [0m[34m│[0m                             [0m[33m^^^[0m [0m[33mUnnecessary alias 'UID' for module member 'sui::object::UID'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:3:34
+  [0m[34m│[0m
+[0m[34m3[0m [0m[34m│[0m     use sui::object::{Self, UID, [0m[33mID[0m};
+  [0m[34m│[0m                                  [0m[33m^^[0m [0m[33mUnnecessary alias 'ID' for module member 'sui::object::ID'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:4:27
+  [0m[34m│[0m
+[0m[34m4[0m [0m[34m│[0m     use sui::tx_context::{[0m[33mSelf[0m, TxContext};
+  [0m[34m│[0m                           [0m[33m^^^^[0m [0m[33mUnnecessary alias 'tx_context' for module 'sui::tx_context'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:4:33
+  [0m[34m│[0m
+[0m[34m4[0m [0m[34m│[0m     use sui::tx_context::{Self, [0m[33mTxContext[0m};
+  [0m[34m│[0m                                 [0m[33m^^^^^^^^^[0m [0m[33mUnnecessary alias 'TxContext' for module member 'sui::tx_context::TxContext'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:8:14
+  [0m[34m│[0m
+[0m[34m8[0m [0m[34m│[0m     use sui::[0m[33mtransfer[0m;
+  [0m[34m│[0m              [0m[33m^^^^^^^^[0m [0m[33mUnnecessary alias 'transfer' for module 'sui::transfer'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:14:14
+   [0m[34m│[0m
+[0m[34m14[0m [0m[34m│[0m     use std::[0m[33mvector[0m;
+   [0m[34m│[0m              [0m[33m^^^^^^[0m [0m[33mUnnecessary alias 'vector' for module 'std::vector'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:15:23
+   [0m[34m│[0m
+[0m[34m15[0m [0m[34m│[0m     use std::option::{[0m[33mSelf[0m, Option};
+   [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnnecessary alias 'option' for module 'std::option'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:15:29
+   [0m[34m│[0m
+[0m[34m15[0m [0m[34m│[0m     use std::option::{Self, [0m[33mOption[0m};
+   [0m[34m│[0m                             [0m[33m^^^^^^[0m [0m[33mUnnecessary alias 'Option' for module member 'std::option::Option'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
+    [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:271:13
+    [0m[34m│[0m
+[0m[34m251[0m [0m[34m│[0m     ): WonkaBar {
+    [0m[34m│[0m        [0m[34m--------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
+    [0m[34m·[0m
+[0m[34m262[0m [0m[34m│[0m         let buyer = tx_context::sender(ctx);
+    [0m[34m│[0m                     [0m[34m-----------------------[0m [0m[34mTransaction sender address coming from here[0m
+    [0m[34m·[0m
+[0m[34m271[0m [0m[34m│[0m             [0m[33mtransfer::public_transfer(coin::from_balance(payment_balance, ctx), buyer)[0m;
+    [0m[34m│[0m             [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mTransfer of an object to transaction sender address[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
+    [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:406:17
+    [0m[34m│[0m
+[0m[34m369[0m [0m[34m│[0m     ): Option<T> {
+    [0m[34m│[0m        [0m[34m---------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
+[0m[34m370[0m [0m[34m│[0m         assert!(lottery.state != LOTTERY_ACTIVE, EInvalidLotteryState);
+[0m[34m371[0m [0m[34m│[0m         let claimer = tx_context::sender(ctx);
+    [0m[34m│[0m                       [0m[34m-----------------------[0m [0m[34mTransaction sender address coming from here[0m
+    [0m[34m·[0m
+[0m[34m406[0m [0m[34m│[0m                 [0m[33mtransfer::public_transfer(refund_coin, claimer)[0m;
+    [0m[34m│[0m                 [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mTransfer of an object to transaction sender address[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
+    [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:476:9
+    [0m[34m│[0m
+[0m[34m466[0m [0m[34m│[0m     public fun withdraw_protocol_fees(
+    [0m[34m│[0m                [0m[34m----------------------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
+    [0m[34m·[0m
+[0m[34m476[0m [0m[34m│[0m         [0m[33mtransfer::public_transfer(fee_coin, tx_context::sender(ctx))[0m;
+    [0m[34m│[0m         [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [0m[34m│[0m         [0m[33m│[0m                                   [0m[34m│[0m
+    [0m[34m│[0m         [0m[33m│[0m                                   [0m[34mTransaction sender address coming from here[0m
+    [0m[34m│[0m         [0m[33mTransfer of an object to transaction sender address[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+Please report feedback on the linter warnings at https://forums.sui.io
+
+Total number of linter warnings suppressed: 2 (unique lints: 1)
+Skipping dependency verification
+{
+  "digest": "CT57shcwd9rLgtXiEPDoC7jmFNSAHae9Ww9VMWhHnc7T",
+  "transaction": {
+    "data": {
+      "messageVersion": "v1",
+      "transaction": {
+        "kind": "ProgrammableTransaction",
+        "inputs": [
+          {
+            "type": "pure",
+            "valueType": "address",
+            "value": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+          }
+        ],
+        "transactions": [
+          {
+            "Publish": [
+              "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000000000000000000000000000002"
+            ]
+          },
+          {
+            "TransferObjects": [
+              [
+                {
+                  "Result": 0
+                }
+              ],
+              {
+                "Input": 0
+              }
+            ]
+          }
+        ]
+      },
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "gasData": {
+        "payment": [
+          {
+            "objectId": "0x43dfc736a06b51b8321ce3fcc9633beb9cc8782997140bc42153deddcf28663f",
+            "version": 349180655,
+            "digest": "D9idox8D4NqAqLj6GSubxojJUghS9XSuQuhc5TssYQfr"
+          }
+        ],
+        "owner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+        "price": "1000",
+        "budget": "100000000"
+      }
+    },
+    "txSignatures": [
+      "ACdM27Ph3Q746P6fEsi5eDoigIIJwme4wmCB0FIL3qIfypQyF2GzypVc3XfxOMS3k7LJDGOVLE8uEDuHUzvJjwrqXLyjDTyj5tphC4L6MVAf8BdNK+A7fYKLVrJVi5Uhxg=="
+    ]
+  },
+  "effects": {
+    "messageVersion": "v1",
+    "status": {
+      "status": "success"
+    },
+    "executedEpoch": "870",
+    "gasUsed": {
+      "computationCost": "1000000",
+      "storageCost": "76296400",
+      "storageRebate": "978120",
+      "nonRefundableStorageFee": "9880"
+    },
+    "modifiedAtVersions": [
+      {
+        "objectId": "0x43dfc736a06b51b8321ce3fcc9633beb9cc8782997140bc42153deddcf28663f",
+        "sequenceNumber": "349180655"
+      }
+    ],
+    "transactionDigest": "CT57shcwd9rLgtXiEPDoC7jmFNSAHae9Ww9VMWhHnc7T",
+    "created": [
+      {
+        "owner": {
+          "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+        },
+        "reference": {
+          "objectId": "0x0d179676dde5892dad4e145e973e0a7a92e9810f65847512be3adb52890bc4e1",
+          "version": 349180656,
+          "digest": "3B6zjuyM1fePT5fPFAfhpurVWqGfCrV2tuRL6Gc1X8kh"
+        }
+      },
+      {
+        "owner": "Immutable",
+        "reference": {
+          "objectId": "0x1cef20cb1dce458165c807299cf0ee4c5f2899b82e613c84bb66315669778d72",
+          "version": 349180656,
+          "digest": "B5UDTvPokKZzKWvggzwsXBGw52RZkah9ARfHCdvG7Ar9"
+        }
+      },
+      {
+        "owner": {
+          "Shared": {
+            "initial_shared_version": 349180656
+          }
+        },
+        "reference": {
+          "objectId": "0x3f5b59c8eecddedfa14503dcdc6a02e0562afc5617a10746d3d21dd6444e279e",
+          "version": 349180656,
+          "digest": "8azEzdGtfaoRVA4drt8tgRG64vSeST5M1SZCT7oToR6U"
+        }
+      },
+      {
+        "owner": {
+          "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+        },
+        "reference": {
+          "objectId": "0x453218828df7e522991ef8287ae10d7e772f4561f9d92ca1def2d7c02bb445a1",
+          "version": 349180656,
+          "digest": "BGwxKPNWaZR27CYSBzfFPWDKovE6mvHv277VvdLxofQA"
+        }
+      },
+      {
+        "owner": {
+          "Shared": {
+            "initial_shared_version": 349180656
+          }
+        },
+        "reference": {
+          "objectId": "0x57706f117b6ecd7f39f4bbaa4f183cf80528a083b3e7d25e3a677634850fde88",
+          "version": 349180656,
+          "digest": "CM2NoAfLuc3iFEbZcECFjxCKYY9JrsxZaGJNE9xpqsAm"
+        }
+      },
+      {
+        "owner": {
+          "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+        },
+        "reference": {
+          "objectId": "0x8922aa0705ca1c9ffadfb2fb6b473df49a6fbb276601df46383f78688e5a5f1e",
+          "version": 349180656,
+          "digest": "FWDBvVgkRvfEhJF8dVkStCrzKHKrn57xggConVwwex5L"
+        }
+      },
+      {
+        "owner": "Immutable",
+        "reference": {
+          "objectId": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1",
+          "version": 1,
+          "digest": "HDNZqSHUSrb6TtND3owbyh9NyDGxprA5jK3ffhkJrCDP"
+        }
+      }
+    ],
+    "mutated": [
+      {
+        "owner": {
+          "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+        },
+        "reference": {
+          "objectId": "0x43dfc736a06b51b8321ce3fcc9633beb9cc8782997140bc42153deddcf28663f",
+          "version": 349180656,
+          "digest": "CvKghJAywfo5RpwdVULekeskA9LxknJCKpbr6PWguVVJ"
+        }
+      }
+    ],
+    "gasObject": {
+      "owner": {
+        "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+      },
+      "reference": {
+        "objectId": "0x43dfc736a06b51b8321ce3fcc9633beb9cc8782997140bc42153deddcf28663f",
+        "version": 349180656,
+        "digest": "CvKghJAywfo5RpwdVULekeskA9LxknJCKpbr6PWguVVJ"
+      }
+    },
+    "eventsDigest": "Dh5shwey5G4hhfEB41rdfTFPcoPyQFRoSXjAHszTmKZC",
+    "dependencies": [
+      "2dkJtqsoQcyCZJvjZnskNVPQeynwVtwCcA9goAru6tTi",
+      "Ae7HNqmmuXfkqvrt4X3wfa4bm43FLm4h6GprkrCH49rL",
+      "Dd9pn1zFcSJjinxQewFd2gQdR4XKsHxFioD5MYnwLZQz"
+    ]
+  },
+  "events": [
+    {
+      "id": {
+        "txDigest": "CT57shcwd9rLgtXiEPDoC7jmFNSAHae9Ww9VMWhHnc7T",
+        "eventSeq": "0"
+      },
+      "packageId": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1",
+      "transactionModule": "core",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "type": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::core::ProtocolUpdated",
+      "parsedJson": {
+        "action": "protocol_initialized",
+        "admin": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+        "data": "MeltyFi protocol deployed"
+      },
+      "bcsEncoding": "base64",
+      "bcs": "JdnG+2bbgdLXlGJdDJxylN37hMSKTIFVfjIdqPRXztIUcHJvdG9jb2xfaW5pdGlhbGl6ZWQZTWVsdHlGaSBwcm90b2NvbCBkZXBsb3llZA=="
+    }
+  ],
+  "objectChanges": [
+    {
+      "type": "mutated",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "owner": {
+        "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+      },
+      "objectType": "0x2::coin::Coin<0x2::sui::SUI>",
+      "objectId": "0x43dfc736a06b51b8321ce3fcc9633beb9cc8782997140bc42153deddcf28663f",
+      "version": "349180656",
+      "previousVersion": "349180655",
+      "digest": "CvKghJAywfo5RpwdVULekeskA9LxknJCKpbr6PWguVVJ"
+    },
+    {
+      "type": "created",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "owner": {
+        "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+      },
+      "objectType": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::core::AdminCap",
+      "objectId": "0x0d179676dde5892dad4e145e973e0a7a92e9810f65847512be3adb52890bc4e1",
+      "version": "349180656",
+      "digest": "3B6zjuyM1fePT5fPFAfhpurVWqGfCrV2tuRL6Gc1X8kh"
+    },
+    {
+      "type": "created",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "owner": "Immutable",
+      "objectType": "0x2::coin::CoinMetadata<0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::choco_chip::CHOCO_CHIP>",
+      "objectId": "0x1cef20cb1dce458165c807299cf0ee4c5f2899b82e613c84bb66315669778d72",
+      "version": "349180656",
+      "digest": "B5UDTvPokKZzKWvggzwsXBGw52RZkah9ARfHCdvG7Ar9"
+    },
+    {
+      "type": "created",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "owner": {
+        "Shared": {
+          "initial_shared_version": 349180656
+        }
+      },
+      "objectType": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::core::Protocol",
+      "objectId": "0x3f5b59c8eecddedfa14503dcdc6a02e0562afc5617a10746d3d21dd6444e279e",
+      "version": "349180656",
+      "digest": "8azEzdGtfaoRVA4drt8tgRG64vSeST5M1SZCT7oToR6U"
+    },
+    {
+      "type": "created",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "owner": {
+        "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+      },
+      "objectType": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::choco_chip::FactoryAdmin",
+      "objectId": "0x453218828df7e522991ef8287ae10d7e772f4561f9d92ca1def2d7c02bb445a1",
+      "version": "349180656",
+      "digest": "BGwxKPNWaZR27CYSBzfFPWDKovE6mvHv277VvdLxofQA"
+    },
+    {
+      "type": "created",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "owner": {
+        "Shared": {
+          "initial_shared_version": 349180656
+        }
+      },
+      "objectType": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::choco_chip::ChocolateFactory",
+      "objectId": "0x57706f117b6ecd7f39f4bbaa4f183cf80528a083b3e7d25e3a677634850fde88",
+      "version": "349180656",
+      "digest": "CM2NoAfLuc3iFEbZcECFjxCKYY9JrsxZaGJNE9xpqsAm"
+    },
+    {
+      "type": "created",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "owner": {
+        "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+      },
+      "objectType": "0x2::package::UpgradeCap",
+      "objectId": "0x8922aa0705ca1c9ffadfb2fb6b473df49a6fbb276601df46383f78688e5a5f1e",
+      "version": "349180656",
+      "digest": "FWDBvVgkRvfEhJF8dVkStCrzKHKrn57xggConVwwex5L"
+    },
+    {
+      "type": "published",
+      "packageId": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1",
+      "version": "1",
+      "digest": "HDNZqSHUSrb6TtND3owbyh9NyDGxprA5jK3ffhkJrCDP",
+      "modules": [
+        "choco_chip",
+        "core",
+        "meltyfi"
+      ]
+    }
+  ],
+  "balanceChanges": [
+    {
+      "owner": {
+        "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+      },
+      "coinType": "0x2::sui::SUI",
+      "amount": "-76318280"
+    }
+  ],
+  "timestampMs": "1758987522302",
+  "confirmedLocalExecution": true,
+  "checkpoint": "246115434"
+}
