@@ -1,6 +1,5 @@
 'use client'
 
-import { cn } from "@/lib/utils"
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Select from '@radix-ui/react-select'
 import * as Tabs from '@radix-ui/react-tabs'
@@ -36,8 +35,7 @@ const mockLotteries = [
         wonkaBarsSold: 45,
         wonkaBarsMaxSupply: 100,
         totalRaised: 4.5,
-        status: "active",
-        rarity: "legendary"
+        status: "active"
     },
     {
         id: 2,
@@ -51,8 +49,7 @@ const mockLotteries = [
         wonkaBarsSold: 87,
         wonkaBarsMaxSupply: 150,
         totalRaised: 4.35,
-        status: "active",
-        rarity: "rare"
+        status: "active"
     },
     {
         id: 3,
@@ -66,8 +63,7 @@ const mockLotteries = [
         wonkaBarsSold: 23,
         wonkaBarsMaxSupply: 80,
         totalRaised: 0.46,
-        status: "active",
-        rarity: "common"
+        status: "active"
     }
 ]
 
@@ -101,15 +97,6 @@ function LotteryCard({ lottery }: LotteryCardProps) {
     const timeLeft = lottery.expirationDate.getTime() - Date.now()
     const daysLeft = Math.ceil(timeLeft / (1000 * 60 * 60 * 24))
 
-    const getRarityColor = (rarity: string) => {
-        switch (rarity) {
-            case 'legendary': return 'bg-amber-500'
-            case 'rare': return 'bg-purple-500'
-            case 'common': return 'bg-blue-500'
-            default: return 'bg-gray-500'
-        }
-    }
-
     return (
         <>
             <div className="group hover:shadow-xl transition-all duration-300 overflow-hidden border border-white/10 bg-white/5 backdrop-blur-sm rounded-lg">
@@ -121,14 +108,6 @@ function LotteryCard({ lottery }: LotteryCardProps) {
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
-                        <div className="absolute top-4 left-4">
-                            <div className={cn(
-                                getRarityColor(lottery.rarity),
-                                "text-white capitalize px-2.5 py-0.5 text-xs font-semibold rounded-md"
-                            )}>
-                                {lottery.rarity}
-                            </div>
-                        </div>
                         <div className="absolute top-4 right-4">
                             <div className="bg-black/50 text-white px-2.5 py-0.5 text-xs font-semibold rounded-md flex items-center">
                                 <Clock className="w-3 h-3 mr-1" />
@@ -503,7 +482,7 @@ export default function LotteriesPage() {
         )
 
         if (filterBy !== "all") {
-            filtered = filtered.filter(lottery => lottery.rarity === filterBy)
+            filtered = filtered.filter(lottery => lottery.status === filterBy)
         }
 
         // Sort lotteries
@@ -613,45 +592,6 @@ export default function LotteriesPage() {
                                             </Select.Item>
                                             <Select.Item value="highest-prize" className="flex items-center px-3 py-2 text-white hover:bg-white/10 rounded cursor-pointer">
                                                 <Select.ItemText>Highest Prize</Select.ItemText>
-                                                <Select.ItemIndicator className="ml-auto">
-                                                    <Check className="h-4 w-4" />
-                                                </Select.ItemIndicator>
-                                            </Select.Item>
-                                        </Select.Viewport>
-                                    </Select.Content>
-                                </Select.Portal>
-                            </Select.Root>
-
-                            <Select.Root value={filterBy} onValueChange={setFilterBy}>
-                                <Select.Trigger className="w-48 flex items-center justify-between px-3 py-2 bg-white/5 border border-white/10 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500">
-                                    <Select.Value />
-                                    <Select.Icon>
-                                        <ChevronDown className="h-4 w-4" />
-                                    </Select.Icon>
-                                </Select.Trigger>
-                                <Select.Portal>
-                                    <Select.Content className="bg-gray-900 border border-white/10 rounded-md shadow-lg z-50">
-                                        <Select.Viewport className="p-1">
-                                            <Select.Item value="all" className="flex items-center px-3 py-2 text-white hover:bg-white/10 rounded cursor-pointer">
-                                                <Select.ItemText>All Rarities</Select.ItemText>
-                                                <Select.ItemIndicator className="ml-auto">
-                                                    <Check className="h-4 w-4" />
-                                                </Select.ItemIndicator>
-                                            </Select.Item>
-                                            <Select.Item value="legendary" className="flex items-center px-3 py-2 text-white hover:bg-white/10 rounded cursor-pointer">
-                                                <Select.ItemText>Legendary</Select.ItemText>
-                                                <Select.ItemIndicator className="ml-auto">
-                                                    <Check className="h-4 w-4" />
-                                                </Select.ItemIndicator>
-                                            </Select.Item>
-                                            <Select.Item value="rare" className="flex items-center px-3 py-2 text-white hover:bg-white/10 rounded cursor-pointer">
-                                                <Select.ItemText>Rare</Select.ItemText>
-                                                <Select.ItemIndicator className="ml-auto">
-                                                    <Check className="h-4 w-4" />
-                                                </Select.ItemIndicator>
-                                            </Select.Item>
-                                            <Select.Item value="common" className="flex items-center px-3 py-2 text-white hover:bg-white/10 rounded cursor-pointer">
-                                                <Select.ItemText>Common</Select.ItemText>
                                                 <Select.ItemIndicator className="ml-auto">
                                                     <Check className="h-4 w-4" />
                                                 </Select.ItemIndicator>
