@@ -89,6 +89,18 @@ check_prerequisites() {
         error "npm not found. Please install npm."
     fi
     
+    # Check for jq (helpful for JSON parsing)
+    if ! command -v jq &> /dev/null; then
+        warn "jq not found. Balance parsing will use fallback method."
+        info "Install jq for better JSON parsing: brew install jq (macOS) or apt-get install jq (Ubuntu)"
+    fi
+    
+    # Check for bc (helpful for calculations)
+    if ! command -v bc &> /dev/null; then
+        warn "bc not found. Calculations will use fallback method."
+        info "Install bc for better calculations: brew install bc (macOS) or apt-get install bc (Ubuntu)"
+    fi
+    
     success "All prerequisites met"
 }
 
@@ -113,19 +125,118 @@ setup_sui_environment() {
     
     log "Active address: $DEPLOYER_ADDRESS"
     
-    # Check balance
-    BALANCE=$(sui client balance --json | jq -r '.totalBalance' 2>/dev/null || echo "0")
-    if [ "$BALANCE" -lt 200000000 ]; then  # 0.2 SUI minimum
-        warn "Low SUI balance detected ($BALANCE MIST). You might need more SUI for deployment."
-        info "Get testnet SUI from: https://faucet.testnet.sui.io/gas"
-        read -p "Continue anyway? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            exit 1
+    # Check balance with improved parsing (same logic as sui_setup.sh)
+    info "Checking SUI balance for deployment..."
+    check_balance_for_deployment
+    
+    success "Sui environment configured for testnet"
+}
+
+# Enhanced balance checking function (adapted from sui_setup.sh)
+check_balance_for_deployment() {
+    local balance_sui="0"
+    local balance_mist="0"
+    
+    # Try JSON parsing first (with fixed structure handling)
+    if command -v jq &> /dev/null; then
+        local json_output=$(sui client balance --json 2>/dev/null || echo "")
+        if [ -n "$json_output" ]; then
+            # Handle the nested array structure: [[[metadata, [coin_objects]]], boolean]
+            # Sum up all the balance values from individual coin objects
+            balance_mist=$(echo "$json_output" | jq -r '
+                if type == "array" and length > 0 then
+                    .[0][0][1] // [] | 
+                    if type == "array" then 
+                        map(select(.coinType == "0x2::sui::SUI") | .balance | tonumber) | add // 0
+                    else 0 end
+                else 0 end
+            ' 2>/dev/null || echo "0")
+            
+            if [ "$balance_mist" != "0" ] && [ "$balance_mist" != "null" ] && [ -n "$balance_mist" ]; then
+                if command -v bc &> /dev/null; then
+                    balance_sui=$(echo "scale=2; $balance_mist / 1000000000" | bc 2>/dev/null || echo "0")
+                else
+                    # Fallback calculation without bc
+                    balance_sui=$(awk "BEGIN {printf \"%.2f\", $balance_mist / 1000000000}")
+                fi
+            fi
         fi
     fi
     
-    success "Sui environment configured for testnet"
+    # Fallback to human-readable parsing if JSON failed
+    if [ "$balance_sui" = "0" ] || [ -z "$balance_sui" ]; then
+        local balance_output=$(sui client balance 2>/dev/null || echo "")
+        if echo "$balance_output" | grep -q "SUI"; then
+            # Extract the decimal balance (e.g., "6.00" from "6.00 SUI")
+            balance_sui=$(echo "$balance_output" | grep -oE '[0-9]+(\.[0-9]+)?\s*SUI' | grep -oE '[0-9]+(\.[0-9]+)?' | head -1 || echo "0")
+            
+            # Convert to MIST for threshold comparisons (ensure integer)
+            if [ "$balance_sui" != "0" ] && [ -n "$balance_sui" ]; then
+                if command -v bc &> /dev/null; then
+                    balance_mist=$(echo "$balance_sui * 1000000000" | bc 2>/dev/null | cut -d'.' -f1 || echo "0")
+                else
+                    # Fallback calculation without bc
+                    balance_mist=$(awk "BEGIN {printf \"%.0f\", $balance_sui * 1000000000}")
+                fi
+                balance_mist=${balance_mist:-0}
+            fi
+        fi
+    fi
+    
+    # Set global variables for use in deployment
+    BALANCE_SUI="$balance_sui"
+    BALANCE_MIST="$balance_mist"
+    
+    info "Current balance: $balance_sui SUI ($balance_mist MIST)"
+    
+    # Define minimum balance threshold for deployment (0.2 SUI = 200,000,000 MIST)
+    local min_deployment_threshold=200000000
+    
+    # Ensure balance_mist is a valid number for comparison
+    balance_mist=${balance_mist:-0}
+    
+    # Compare balance in MIST units
+    if [ "$balance_mist" -lt "$min_deployment_threshold" ]; then
+        if [ "$balance_mist" -eq "0" ]; then
+            warn "No SUI balance detected. You need testnet SUI to deploy contracts."
+        else
+            warn "Low SUI balance detected ($balance_sui SUI). Deployment requires at least 0.2 SUI."
+        fi
+        
+        info ""
+        info "🚰 Get testnet SUI tokens:"
+        info "1. Web Faucet: https://faucet.testnet.sui.io/gas"
+        info "2. Enter your address: $DEPLOYER_ADDRESS"
+        info "3. Discord: https://discord.gg/sui (#testnet-faucet channel)"
+        info "4. CLI: sui client faucet"
+        info ""
+        
+        read -p "$(echo -e ${YELLOW}Continue with deployment anyway? (y/N): ${NC})" -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            error "Deployment cancelled. Please get testnet SUI and try again."
+        fi
+        
+        warn "Proceeding with low balance. Deployment may fail due to insufficient gas."
+    else
+        success "Sufficient SUI balance for deployment: $balance_sui SUI"
+        
+        # Provide deployment cost estimate
+        local estimated_cost_mist=100000000  # 0.1 SUI estimate
+        local estimated_cost_sui=$(echo "scale=2; $estimated_cost_mist / 1000000000" | bc 2>/dev/null || echo "0.1")
+        info "Estimated deployment cost: ~$estimated_cost_sui SUI"
+        
+        local remaining_after_deployment
+        if command -v bc &> /dev/null; then
+            remaining_after_deployment=$(echo "scale=2; ($balance_mist - $estimated_cost_mist) / 1000000000" | bc 2>/dev/null || echo "unknown")
+        else
+            remaining_after_deployment=$(awk "BEGIN {printf \"%.2f\", ($balance_mist - $estimated_cost_mist) / 1000000000}")
+        fi
+        
+        if [ "$remaining_after_deployment" != "unknown" ]; then
+            info "Estimated remaining balance after deployment: ~$remaining_after_deployment SUI"
+        fi
+    fi
 }
 
 # Install dependencies
@@ -349,6 +460,31 @@ build_frontend() {
 generate_summary() {
     log "Generating deployment summary..."
     
+    # Get final balance for summary
+    local final_balance_sui="0"
+    local balance_output=$(sui client balance 2>/dev/null || echo "")
+    if echo "$balance_output" | grep -q "SUI"; then
+        final_balance_sui=$(echo "$balance_output" | grep -oE '[0-9]+(\.[0-9]+)?\s*SUI' | grep -oE '[0-9]+(\.[0-9]+)?' | head -1 || echo "0")
+    fi
+    
+    # Calculate deployment cost if we have initial balance
+    local deployment_cost="unknown"
+    if [ -n "$BALANCE_SUI" ] && [ "$BALANCE_SUI" != "0" ] && [ "$final_balance_sui" != "0" ]; then
+        if command -v bc &> /dev/null; then
+            deployment_cost=$(echo "scale=4; $BALANCE_SUI - $final_balance_sui" | bc 2>/dev/null || echo "unknown")
+        else
+            deployment_cost=$(awk "BEGIN {printf \"%.4f\", $BALANCE_SUI - $final_balance_sui}")
+        fi
+        
+        # Handle negative values (if balance increased during deployment)
+        if [ "$deployment_cost" != "unknown" ]; then
+            local cost_check=$(echo "$deployment_cost < 0" | bc 2>/dev/null || echo "0")
+            if [ "$cost_check" = "1" ]; then
+                deployment_cost="<0.0001"
+            fi
+        fi
+    fi
+    
     cat << EOF
 
 ${GREEN}🎉 MeltyFi Protocol Deployment Complete! 🎉${NC}
@@ -359,7 +495,10 @@ ${CYAN}📋 Deployment Summary:${NC}
 ├─ Protocol Object: ${BLUE}$PROTOCOL_OBJECT_ID${NC}
 ├─ Chocolate Factory: ${BLUE}$CHOCOLATE_FACTORY_ID${NC}
 ├─ Deployer: ${BLUE}$DEPLOYER_ADDRESS${NC}
-└─ Transaction: ${BLUE}$TX_DIGEST${NC}
+├─ Transaction: ${BLUE}$TX_DIGEST${NC}
+├─ Initial Balance: ${YELLOW}${BALANCE_SUI:-unknown} SUI${NC}
+├─ Final Balance: ${YELLOW}$final_balance_sui SUI${NC}
+└─ Deployment Cost: ${YELLOW}~$deployment_cost SUI${NC}
 
 ${CYAN}🔗 Explorer Links:${NC}
 ├─ Package: ${BLUE}https://suiexplorer.com/object/$PACKAGE_ID?network=testnet${NC}
@@ -377,6 +516,12 @@ ${CYAN}📁 Generated Files:${NC}
 ├─ ${YELLOW}.env${NC} - Root environment configuration
 ├─ ${YELLOW}frontend/.env.local${NC} - Frontend environment
 └─ ${YELLOW}deployment.log${NC} - Full deployment logs
+
+${CYAN}💡 Testing Tips:${NC}
+├─ Current balance (${final_balance_sui} SUI) should be sufficient for testing
+├─ Each lottery creation costs ~0.01-0.02 SUI
+├─ Each WonkaBar purchase costs the set price + gas (~0.001 SUI)
+└─ If you run low, use the testnet faucet above
 
 ${GREEN}Happy testing! 🍫✨${NC}
 

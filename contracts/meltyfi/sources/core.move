@@ -1,4 +1,3 @@
-// ===== sources/meltyfi_core.move =====
 /// MeltyFi Protocol - Core lottery and NFT liquidity protocol
 module meltyfi::core {
     use sui::object::{Self, UID, ID};
@@ -10,7 +9,6 @@ module meltyfi::core {
     use sui::event;
     use sui::clock::{Self, Clock};
     use sui::random::{Self, Random};
-    use sui::dynamic_field as df;
     use sui::dynamic_object_field as dof;
     use sui::vec_map::{Self, VecMap};
     use std::vector;
@@ -39,9 +37,7 @@ module meltyfi::core {
     const EInvalidQuantity: u64 = 5;
     const EMaxSupplyReached: u64 = 6;
     const EInsufficientPayment: u64 = 7;
-    const ELotteryNotFound: u64 = 8;
     const ENotLotteryOwner: u64 = 9;
-    const ENoWinnerSelected: u64 = 10;
     const EInvalidDuration: u64 = 11;
     const EProtocolPaused: u64 = 12;
 
@@ -218,8 +214,10 @@ module meltyfi::core {
 
         // Store NFT as dynamic field
         dof::add(&mut lottery.id, b"nft", nft);
+        let lottery_id_copy = object::uid_to_inner(&lottery.id);
+        
         // Add to active lotteries
-        vec_map::insert(&mut protocol.active_lotteries, lottery_id, object::uid_to_inner(&lottery.id));
+        vec_map::insert(&mut protocol.active_lotteries, lottery_id, lottery_id_copy);
 
         let receipt = LotteryReceipt {
             id: object::new(ctx),
@@ -264,7 +262,7 @@ module meltyfi::core {
         let buyer = tx_context::sender(ctx);
         
         // Handle payment
-        let payment_balance = coin::into_balance(payment);
+        let mut payment_balance = coin::into_balance(payment);
         let cost_balance = balance::split(&mut payment_balance, total_cost);
         balance::join(&mut lottery.funds, cost_balance);
         
@@ -309,6 +307,7 @@ module meltyfi::core {
     }
 
     /// Resolve lottery (draw winner or cancel)
+    #[allow(lint(public_random))]
     public fun resolve_lottery(
         protocol: &mut Protocol,
         lottery: &mut Lottery,
@@ -356,7 +355,7 @@ module meltyfi::core {
             lottery_id: lottery.lottery_id,
             winner,
             winning_ticket,
-            total_participants: vec_map::size(&lottery.participants),
+            total_participants: vec_map::length(&lottery.participants),
             total_raised: lottery.total_raised,
             state: final_state,
         });
@@ -376,7 +375,6 @@ module meltyfi::core {
         let WonkaBar { id, lottery_id: _, ticket_count, owner: _, purchased_at: _ } = wonka_bar;
         object::delete(id);
 
-        let mut nft_option = option::none<T>();
         let mut refund_amount = 0;
 
         if (lottery.state == LOTTERY_CONCLUDED) {
@@ -385,8 +383,16 @@ module meltyfi::core {
                 // Transfer NFT to winner
                 if (dof::exists_(&lottery.id, b"nft")) {
                     let nft: T = dof::remove(&mut lottery.id, b"nft");
-                    option::destroy!<T>(nft_option);
-                    nft_option = option::some(nft);
+                    let nft_option = option::some(nft);
+                    
+                    event::emit(FundsWithdrawn {
+                        lottery_id: lottery.lottery_id,
+                        recipient: claimer,
+                        amount: 0,
+                        withdrawal_type: string::utf8(b"nft_claim"),
+                    });
+                    
+                    return nft_option
                 };
             };
             // Non-winners get ChocoChip rewards (handled by separate module)
@@ -405,14 +411,10 @@ module meltyfi::core {
             lottery_id: lottery.lottery_id,
             recipient: claimer,
             amount: refund_amount,
-            withdrawal_type: if (option::is_some(&nft_option)) {
-                string::utf8(b"nft_claim")
-            } else {
-                string::utf8(b"refund")
-            },
+            withdrawal_type: string::utf8(b"refund"),
         });
 
-        nft_option
+        option::none<T>()
     }
 
     /// Cancel lottery (owner only, before expiration)
@@ -436,7 +438,7 @@ module meltyfi::core {
             lottery_id: lottery.lottery_id,
             winner: option::none(),
             winning_ticket: 0,
-            total_participants: vec_map::size(&lottery.participants),
+            total_participants: vec_map::length(&lottery.participants),
             total_raised: lottery.total_raised,
             state: LOTTERY_CANCELLED,
         });

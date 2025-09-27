@@ -1,4 +1,3 @@
-// ===== sources/choco_chip.move =====
 /// ChocoChip - Reward token for MeltyFi Protocol
 module meltyfi::choco_chip {
     use sui::coin::{Self, Coin, TreasuryCap};
@@ -8,6 +7,7 @@ module meltyfi::choco_chip {
     use sui::url;
     use sui::event;
     use std::vector;
+    use std::option;
 
     // ===== Constants =====
     const MAX_SUPPLY: u64 = 1_000_000_000_000_000_000; // 1B tokens with 9 decimals
@@ -49,7 +49,9 @@ module meltyfi::choco_chip {
 
     // ===== Initialization =====
 
+    #[allow(deprecated_usage)]
     fun init(witness: CHOCO_CHIP, ctx: &mut TxContext) {
+        // Use the traditional coin creation method with deprecation suppression
         let (treasury_cap, metadata) = coin::create_currency(
             witness,
             DECIMALS,
