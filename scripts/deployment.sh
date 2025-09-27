@@ -288,7 +288,7 @@ setup_sui() {
     if [ "$balance" -lt "1000000000" ]; then
         print_warning "Low SUI balance detected ($balance_sui SUI)"
         print_info "You may need testnet SUI for deployment."
-        print_info "Get testnet SUI from: https://faucet.devnet.sui.io/gas"
+        print_info "Get testnet SUI from: https://faucet.devnet.sui.io"
         print_info "Or use Discord faucet: https://discord.gg/sui (#devnet-faucet channel)"
         
         read -p "$(echo -e ${YELLOW}Continue with current balance? [y/N]: ${NC})" -n 1 -r

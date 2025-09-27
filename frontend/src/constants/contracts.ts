@@ -10,7 +10,7 @@ export const NETWORK_CONFIG = {
     devnet: {
         rpcUrl: 'https://fullnode.devnet.sui.io:443',
         explorer: 'https://suiexplorer.com',
-        faucet: 'https://faucet.devnet.sui.io/gas',
+        faucet: 'https://faucet.devnet.sui.io',
     },
     testnet: {
         rpcUrl: 'https://fullnode.testnet.sui.io:443',
