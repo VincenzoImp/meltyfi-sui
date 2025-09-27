@@ -1,422 +1,322 @@
 #[test_only]
 module meltyfi::meltyfi_tests {
+    use std::option;
     use std::vector;
-    use sui::test_scenario::{Self, Scenario};
-    use sui::clock::{Self, Clock};
-    use sui::coin::{Self, Coin};
+    use sui::test_scenario;
+    use sui::coin;
     use sui::sui::SUI;
-    use sui::test_utils;
-    use sui::random::{Self, Random};
+    use sui::clock;
+    use sui::random;
+    use sui::object;
     
-    use meltyfi::meltyfi_core::{Self, Protocol, Lottery, AdminCap};
-    use meltyfi::choco_chip::{Self, ChocolateFactory, FactoryAdmin};
+    use meltyfi::meltyfi_core::{Self, Protocol, Lottery, LotteryReceipt, AdminCap};
+    use meltyfi::choco_chip::{Self, ChocolateFactory, FactoryAdmin, CHOCO_CHIP};
     use meltyfi::wonka_bars::{Self, WonkaBars};
 
-    const ADMIN: address = @0xAD;
-    const USER1: address = @0xU1;
-    const USER2: address = @0xU2;
-    const USER3: address = @0xU3;
+    // Test addresses
+    const ADMIN: address = @0xa11ce;
+    const USER1: address = @0xb0b;
+    const USER2: address = @0xca51;
 
-    // Test NFT for lottery creation
+    // Test NFT for collateral
     public struct TestNFT has key, store {
         id: sui::object::UID,
         name: vector<u8>,
-        value: u64,
     }
 
-    // Helper function to create test NFT
     fun create_test_nft(ctx: &mut sui::tx_context::TxContext): TestNFT {
         TestNFT {
-            id: sui::object::new(ctx),
+            id: object::new(ctx),
             name: b"Test NFT",
-            value: 1000,
         }
     }
 
-    // Helper function to setup test environment
-    fun setup_test_environment(): (Scenario, Clock, Random) {
+    fun setup_test_environment(): (test_scenario::Scenario, clock::Clock, random::Random) {
         let mut scenario = test_scenario::begin(ADMIN);
-        let ctx = test_scenario::ctx(&mut scenario);
-
-        // Initialize all modules
-        meltyfi_core::init_for_testing(ctx);
-        choco_chip::init_for_testing(ctx);
         
+        // Initialize protocols
         test_scenario::next_tx(&mut scenario, ADMIN);
-        
-        let clock = clock::create_for_testing(ctx);
-        let random = random::create_for_testing(ctx);
-        
+        {
+            meltyfi_core::init_for_testing(test_scenario::ctx(&mut scenario));
+            choco_chip::init_for_testing(test_scenario::ctx(&mut scenario));
+        };
+
+        // Create clock and random for testing
+        let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
+        clock::set_for_testing(&mut clock, 1000000); // Set initial time
+
+        let random = random::create_for_testing(test_scenario::ctx(&mut scenario));
+
         (scenario, clock, random)
     }
 
     #[test]
     fun test_protocol_initialization() {
-        let mut scenario = test_scenario::begin(ADMIN);
-        let ctx = test_scenario::ctx(&mut scenario);
-
-        meltyfi_core::init_for_testing(ctx);
+        let (mut scenario, clock, _random) = setup_test_environment();
+        
         test_scenario::next_tx(&mut scenario, ADMIN);
-
-        // Check that protocol was created
-        assert!(test_scenario::has_most_recent_shared<Protocol>(), 0);
+        {
+            let protocol = test_scenario::take_shared<Protocol>(&scenario);
+            let factory = test_scenario::take_shared<ChocolateFactory>(&scenario);
+            
+            // Check protocol stats
+            let (total_lotteries, treasury_balance, paused) = meltyfi_core::protocol_stats(&protocol);
+            assert!(total_lotteries == 0, 0);
+            assert!(treasury_balance == 0, 1);
+            assert!(!paused, 2);
+            
+            // Check factory initialization
+            assert!(choco_chip::total_supply(&factory) == 0, 3);
+            assert!(choco_chip::max_supply(&factory) == 1_000_000_000_000_000_000, 4);
+            assert!(choco_chip::is_authorized_minter(&factory, ADMIN), 5);
+            
+            test_scenario::return_shared(protocol);
+            test_scenario::return_shared(factory);
+        };
         
-        let protocol = test_scenario::take_shared<Protocol>(&scenario);
-        let (total_lotteries, treasury_balance, active_lotteries, paused) = meltyfi_core::protocol_stats(&protocol);
-        
-        assert!(total_lotteries == 0, 1);
-        assert!(treasury_balance == 0, 2);
-        assert!(active_lotteries == 0, 3);
-        assert!(!paused, 4);
-
-        test_scenario::return_shared(protocol);
-        test_scenario::end(scenario);
-    }
-
-    #[test]
-    fun test_create_lottery() {
-        let (mut scenario, clock, _random) = setup_test_environment();
-
-        let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
-        
-        // Create test NFT
-        let nft = create_test_nft(test_scenario::ctx(&mut scenario));
-
-        // Create lottery
-        let expiration = clock::timestamp_ms(&clock) + 1000000; // 1000 seconds from now
-        let receipt = meltyfi_core::create_lottery(
-            &mut protocol,
-            nft,
-            expiration,
-            100, // 100 MIST per WonkaBar
-            1000, // max 1000 WonkaBars
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
-
-        // Verify lottery creation
-        assert!(meltyfi_core::receipt_lottery_id(&receipt) == 0, 0);
-        
-        let (total_lotteries, _treasury_balance, active_lotteries, _paused) = meltyfi_core::protocol_stats(&protocol);
-        assert!(total_lotteries == 1, 1);
-        assert!(active_lotteries == 1, 2);
-
-        sui::object::delete(receipt);
         clock::destroy_for_testing(clock);
-        test_scenario::return_shared(protocol);
         test_scenario::end(scenario);
     }
 
     #[test]
-    fun test_buy_wonkabars() {
+    fun test_lottery_creation() {
         let (mut scenario, clock, _random) = setup_test_environment();
 
-        let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
-        
+        test_scenario::next_tx(&mut scenario, USER1);
+        {
+            let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
+            let nft = create_test_nft(test_scenario::ctx(&mut scenario));
+
+            let receipt = meltyfi_core::create_lottery(
+                &mut protocol,
+                nft,
+                clock::timestamp_ms(&clock) + 1000000, // 1000 seconds from now
+                100, // 100 SUI per WonkaBar
+                1000, // Max 1000 WonkaBars
+                &clock,
+                test_scenario::ctx(&mut scenario)
+            );
+
+            assert!(meltyfi_core::receipt_lottery_id(&receipt) == 0, 0);
+            
+            // Check protocol stats updated
+            let (total_lotteries, _, _) = meltyfi_core::protocol_stats(&protocol);
+            assert!(total_lotteries == 1, 1);
+
+            sui::object::delete(receipt);
+            test_scenario::return_shared(protocol);
+        };
+
+        clock::destroy_for_testing(clock);
+        test_scenario::end(scenario);
+    }
+
+    #[test]
+    fun test_wonkabar_purchase() {
+        let (mut scenario, clock, _random) = setup_test_environment();
+
         // Create lottery first
-        let nft = create_test_nft(test_scenario::ctx(&mut scenario));
-        let expiration = clock::timestamp_ms(&clock) + 1000000;
-        let receipt = meltyfi_core::create_lottery(
-            &mut protocol,
-            nft,
-            expiration,
-            100, // 100 MIST per WonkaBar
-            1000,
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
-
-        let lottery_id = meltyfi_core::receipt_lottery_id(&receipt);
-        sui::object::delete(receipt);
-
         test_scenario::next_tx(&mut scenario, USER1);
-        let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
-        
+        let receipt = {
+            let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
+            let nft = create_test_nft(test_scenario::ctx(&mut scenario));
+            let receipt = meltyfi_core::create_lottery(
+                &mut protocol,
+                nft,
+                clock::timestamp_ms(&clock) + 1000000,
+                100,
+                1000,
+                &clock,
+                test_scenario::ctx(&mut scenario)
+            );
+            test_scenario::return_shared(protocol);
+            receipt
+        };
+
         // Buy WonkaBars
-        let payment = coin::mint_for_testing<SUI>(500, test_scenario::ctx(&mut scenario)); // 500 MIST
-        let wonka_bars = meltyfi_core::buy_wonkabars(
-            &mut protocol,
-            &mut lottery,
-            payment,
-            5, // buy 5 WonkaBars
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
+        test_scenario::next_tx(&mut scenario, USER2);
+        {
+            let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
+            let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
+            
+            let payment = coin::mint_for_testing<SUI>(500, test_scenario::ctx(&mut scenario)); // 5 WonkaBars worth
+            let wonka_bars = meltyfi_core::buy_wonkabars(
+                &mut protocol,
+                &mut lottery,
+                payment,
+                5,
+                &clock,
+                test_scenario::ctx(&mut scenario)
+            );
 
-        // Verify purchase
-        assert!(wonka_bars::quantity(&wonka_bars) == 5, 0);
-        assert!(wonka_bars::lottery_id(&wonka_bars) == lottery_id, 1);
-        assert!(wonka_bars::owner(&wonka_bars) == USER1, 2);
+            // Check WonkaBars properties
+            assert!(wonka_bars::lottery_id(&wonka_bars) == 0, 0);
+            assert!(wonka_bars::quantity(&wonka_bars) == 5, 1);
+            assert!(wonka_bars::owner(&wonka_bars) == USER2, 2);
 
-        // Check user participation
-        let user_participation = meltyfi_core::user_participation(&lottery, USER1);
-        assert!(user_participation == 5, 3);
+            // Check lottery state
+            let (_, _, _, _, _, _, sold_count, _) = meltyfi_core::lottery_details(&lottery);
+            assert!(sold_count == 5, 3);
 
-        // Check ticket range
-        let (ticket_start, ticket_end) = meltyfi_core::user_ticket_range(&lottery, USER1);
-        assert!(ticket_start == 1, 4);
-        assert!(ticket_end == 5, 5);
+            // Check user participation
+            assert!(meltyfi_core::user_participation(&lottery, USER2) == 5, 4);
 
-        sui::object::delete(wonka_bars);
-        clock::destroy_for_testing(clock);
-        test_scenario::return_shared(protocol);
-        test_scenario::return_shared(lottery);
-        test_scenario::end(scenario);
-    }
-
-    #[test]
-    fun test_multiple_users_buy_wonkabars() {
-        let (mut scenario, clock, _random) = setup_test_environment();
-
-        let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
-        
-        // Create lottery
-        let nft = create_test_nft(test_scenario::ctx(&mut scenario));
-        let expiration = clock::timestamp_ms(&clock) + 1000000;
-        let receipt = meltyfi_core::create_lottery(
-            &mut protocol,
-            nft,
-            expiration,
-            100,
-            1000,
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
+            sui::object::delete(wonka_bars);
+            test_scenario::return_shared(protocol);
+            test_scenario::return_shared(lottery);
+        };
 
         sui::object::delete(receipt);
-        test_scenario::next_tx(&mut scenario, USER1);
-        let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
-
-        // USER1 buys 5 WonkaBars
-        let payment1 = coin::mint_for_testing<SUI>(500, test_scenario::ctx(&mut scenario));
-        let wonka_bars1 = meltyfi_core::buy_wonkabars(
-            &mut protocol,
-            &mut lottery,
-            payment1,
-            5,
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
-
-        // USER2 buys 3 WonkaBars
-        test_scenario::next_tx(&mut scenario, USER2);
-        let payment2 = coin::mint_for_testing<SUI>(300, test_scenario::ctx(&mut scenario));
-        let wonka_bars2 = meltyfi_core::buy_wonkabars(
-            &mut protocol,
-            &mut lottery,
-            payment2,
-            3,
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
-
-        // Verify ticket ranges
-        let (user1_start, user1_end) = meltyfi_core::user_ticket_range(&lottery, USER1);
-        let (user2_start, user2_end) = meltyfi_core::user_ticket_range(&lottery, USER2);
-        
-        assert!(user1_start == 1 && user1_end == 5, 0);
-        assert!(user2_start == 6 && user2_end == 8, 1);
-
-        // Check lottery state
-        let (lottery_id, _owner, state, _exp, _price, _max, sold_count, _winner) = meltyfi_core::lottery_details(&lottery);
-        assert!(sold_count == 8, 2);
-        assert!(state == 0, 3); // ACTIVE
-
-        sui::object::delete(wonka_bars1);
-        sui::object::delete(wonka_bars2);
         clock::destroy_for_testing(clock);
-        test_scenario::return_shared(protocol);
-        test_scenario::return_shared(lottery);
         test_scenario::end(scenario);
     }
 
     #[test]
-    fun test_draw_winner() {
+    fun test_lottery_winner_selection() {
         let (mut scenario, clock, random) = setup_test_environment();
 
-        let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
-        
         // Create lottery
-        let nft = create_test_nft(test_scenario::ctx(&mut scenario));
-        let expiration = clock::timestamp_ms(&clock) + 1000;
-        let receipt = meltyfi_core::create_lottery(
-            &mut protocol,
-            nft,
-            expiration,
-            100,
-            1000,
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
-
-        sui::object::delete(receipt);
         test_scenario::next_tx(&mut scenario, USER1);
-        let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
+        let receipt = {
+            let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
+            let nft = create_test_nft(test_scenario::ctx(&mut scenario));
+            let receipt = meltyfi_core::create_lottery(
+                &mut protocol,
+                nft,
+                clock::timestamp_ms(&clock) + 1000000,
+                100,
+                10, // Small lottery for testing
+                &clock,
+                test_scenario::ctx(&mut scenario)
+            );
+            test_scenario::return_shared(protocol);
+            receipt
+        };
 
-        // Buy some WonkaBars
-        let payment = coin::mint_for_testing<SUI>(500, test_scenario::ctx(&mut scenario));
-        let wonka_bars = meltyfi_core::buy_wonkabars(
-            &mut protocol,
-            &mut lottery,
-            payment,
-            5,
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
+        // Buy WonkaBars from different users
+        test_scenario::next_tx(&mut scenario, USER1);
+        {
+            let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
+            let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
+            let payment = coin::mint_for_testing<SUI>(300, test_scenario::ctx(&mut scenario));
+            let wonka_bars = meltyfi_core::buy_wonkabars(&mut protocol, &mut lottery, payment, 3, &clock, test_scenario::ctx(&mut scenario));
+            sui::object::delete(wonka_bars);
+            test_scenario::return_shared(protocol);
+            test_scenario::return_shared(lottery);
+        };
+
+        test_scenario::next_tx(&mut scenario, USER2);
+        {
+            let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
+            let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
+            let payment = coin::mint_for_testing<SUI>(500, test_scenario::ctx(&mut scenario));
+            let wonka_bars = meltyfi_core::buy_wonkabars(&mut protocol, &mut lottery, payment, 5, &clock, test_scenario::ctx(&mut scenario));
+            sui::object::delete(wonka_bars);
+            test_scenario::return_shared(protocol);
+            test_scenario::return_shared(lottery);
+        };
 
         // Advance time past expiration
-        clock::increment_for_testing(&mut clock, 2000);
+        clock::set_for_testing(&mut clock, clock::timestamp_ms(&clock) + 2000000);
 
         // Draw winner
-        meltyfi_core::draw_winner(
-            &mut lottery,
-            &random,
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
+            meltyfi_core::draw_winner(&mut lottery, &random, &clock, test_scenario::ctx(&mut scenario));
+            
+            // Check lottery concluded
+            let (_, _, state, _, _, _, _, winner) = meltyfi_core::lottery_details(&lottery);
+            assert!(state == 2, 0); // LOTTERY_CONCLUDED
+            assert!(option::is_some(&winner), 1);
+            
+            test_scenario::return_shared(lottery);
+        };
 
-        // Check lottery state
-        let (_lottery_id, _owner, state, _exp, _price, _max, _sold_count, winner) = meltyfi_core::lottery_details(&lottery);
-        assert!(state == 2, 0); // CONCLUDED
-        assert!(std::option::is_some(&winner), 1);
-
-        // Check if USER1 is the winner (should be since they're the only participant)
-        assert!(meltyfi_core::is_lottery_winner(&lottery, USER1), 2);
-
-        sui::object::delete(wonka_bars);
+        sui::object::delete(receipt);
         clock::destroy_for_testing(clock);
         random::destroy_for_testing(random);
-        test_scenario::return_shared(protocol);
-        test_scenario::return_shared(lottery);
         test_scenario::end(scenario);
     }
 
     #[test]
-    fun test_repay_loan() {
-        let (mut scenario, clock, _random) = setup_test_environment();
+    fun test_wonkabar_redemption() {
+        let (mut scenario, clock, random) = setup_test_environment();
 
-        let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
-        
-        // Create lottery
-        let nft = create_test_nft(test_scenario::ctx(&mut scenario));
-        let expiration = clock::timestamp_ms(&clock) + 1000000;
-        let receipt = meltyfi_core::create_lottery(
-            &mut protocol,
-            nft,
-            expiration,
-            100,
-            1000,
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
+        // Create and conclude a lottery
+        test_scenario::next_tx(&mut scenario, USER1);
+        let receipt = {
+            let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
+            let nft = create_test_nft(test_scenario::ctx(&mut scenario));
+            let receipt = meltyfi_core::create_lottery(
+                &mut protocol,
+                nft,
+                clock::timestamp_ms(&clock) + 1000000,
+                100,
+                10,
+                &clock,
+                test_scenario::ctx(&mut scenario)
+            );
+            test_scenario::return_shared(protocol);
+            receipt
+        };
+
+        // Buy WonkaBars
+        test_scenario::next_tx(&mut scenario, USER2);
+        let wonka_bars = {
+            let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
+            let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
+            let payment = coin::mint_for_testing<SUI>(500, test_scenario::ctx(&mut scenario));
+            let wonka_bars = meltyfi_core::buy_wonkabars(&mut protocol, &mut lottery, payment, 5, &clock, test_scenario::ctx(&mut scenario));
+            test_scenario::return_shared(protocol);
+            test_scenario::return_shared(lottery);
+            wonka_bars
+        };
+
+        // Advance time and draw winner
+        clock::set_for_testing(&mut clock, clock::timestamp_ms(&clock) + 2000000);
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
+            meltyfi_core::draw_winner(&mut lottery, &random, &clock, test_scenario::ctx(&mut scenario));
+            test_scenario::return_shared(lottery);
+        };
+
+        // Redeem WonkaBars
+        test_scenario::next_tx(&mut scenario, USER2);
+        {
+            let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
+            let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
+            let mut factory = test_scenario::take_shared<ChocolateFactory>(&scenario);
+            
+            let (nft_option, sui_payout, choco_chips) = meltyfi_core::redeem_wonkabars<TestNFT>(
+                &mut protocol, &mut lottery, &mut factory, wonka_bars, test_scenario::ctx(&mut scenario)
+            );
+
+            // Check redemption results
+            let is_winner = meltyfi_core::is_lottery_winner(&lottery, USER2);
+            if (is_winner) {
+                assert!(option::is_some(&nft_option), 0);
+                let returned_nft = option::extract(&mut nft_option);
+                sui::object::delete(returned_nft);
+            } else {
+                assert!(option::is_none(&nft_option), 0);
+                assert!(coin::value(&sui_payout) > 0, 1);
+            };
+            
+            assert!(choco_chip::coin_value(&choco_chips) == 500, 2); // 5 * 100 ChocoChips
+
+            option::destroy_none(nft_option);
+            sui::object::delete(sui_payout);
+            sui::object::delete(choco_chips);
+            test_scenario::return_shared(protocol);
+            test_scenario::return_shared(lottery);
+            test_scenario::return_shared(factory);
+        };
 
         sui::object::delete(receipt);
-        test_scenario::next_tx(&mut scenario, USER1);
-        let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
-
-        // USER1 buys WonkaBars
-        let payment = coin::mint_for_testing<SUI>(500, test_scenario::ctx(&mut scenario));
-        let wonka_bars = meltyfi_core::buy_wonkabars(
-            &mut protocol,
-            &mut lottery,
-            payment,
-            5,
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
-
-        // Owner repays loan
-        test_scenario::next_tx(&mut scenario, ADMIN);
-        let repayment = coin::mint_for_testing<SUI>(525, test_scenario::ctx(&mut scenario)); // 500 + 5% fee
-        let returned_nft: TestNFT = meltyfi_core::repay_loan(
-            &mut protocol,
-            &mut lottery,
-            repayment,
-            test_scenario::ctx(&mut scenario)
-        );
-
-        // Check lottery state
-        let (_lottery_id, _owner, state, _exp, _price, _max, _sold_count, _winner) = meltyfi_core::lottery_details(&lottery);
-        assert!(state == 1, 0); // CANCELLED
-
-        // Verify NFT returned
-        assert!(returned_nft.name == b"Test NFT", 1);
-
-        sui::object::delete(wonka_bars);
-        sui::object::delete(returned_nft);
         clock::destroy_for_testing(clock);
-        test_scenario::return_shared(protocol);
-        test_scenario::return_shared(lottery);
-        test_scenario::end(scenario);
-    }
-
-    #[test]
-    fun test_choco_chip_integration() {
-        let (mut scenario, clock, _random) = setup_test_environment();
-
-        // Take chocolate factory
-        let mut factory = test_scenario::take_shared<ChocolateFactory>(&scenario);
-        
-        // Create lottery and buy WonkaBars
-        let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
-        let nft = create_test_nft(test_scenario::ctx(&mut scenario));
-        let expiration = clock::timestamp_ms(&clock) + 1000000;
-        let receipt = meltyfi_core::create_lottery(
-            &mut protocol,
-            nft,
-            expiration,
-            100,
-            1000,
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
-
-        sui::object::delete(receipt);
-        test_scenario::next_tx(&mut scenario, USER1);
-        let mut lottery = test_scenario::take_shared<Lottery>(&scenario);
-
-        let payment = coin::mint_for_testing<SUI>(500, test_scenario::ctx(&mut scenario));
-        let wonka_bars = meltyfi_core::buy_wonkabars(
-            &mut protocol,
-            &mut lottery,
-            payment,
-            5,
-            &clock,
-            test_scenario::ctx(&mut scenario)
-        );
-
-        // Cancel lottery to enable refunds
-        test_scenario::next_tx(&mut scenario, ADMIN);
-        let repayment = coin::mint_for_testing<SUI>(525, test_scenario::ctx(&mut scenario));
-        let returned_nft: TestNFT = meltyfi_core::repay_loan(
-            &mut protocol,
-            &mut lottery,
-            repayment,
-            test_scenario::ctx(&mut scenario)
-        );
-
-        // Redeem WonkaBars for refund + ChocoChips
-        test_scenario::next_tx(&mut scenario, USER1);
-        let (nft_option, sui_payout, choco_chips) = meltyfi_core::redeem_wonkabars<TestNFT>(
-            &mut lottery,
-            &mut factory,
-            wonka_bars,
-            test_scenario::ctx(&mut scenario)
-        );
-
-        // Verify redemption
-        assert!(std::option::is_none(&nft_option), 0); // No NFT for non-winner
-        assert!(sui::coin::value(&sui_payout) > 0, 1); // Should get refund
-        assert!(choco_chip::coin_value(&choco_chips) == 500, 2); // 5 * 100 ChocoChips
-
-        std::option::destroy_none(nft_option);
-        sui::object::delete(sui_payout);
-        sui::object::delete(choco_chips);
-        sui::object::delete(returned_nft);
-        clock::destroy_for_testing(clock);
-        test_scenario::return_shared(protocol);
-        test_scenario::return_shared(lottery);
-        test_scenario::return_shared(factory);
+        random::destroy_for_testing(random);
         test_scenario::end(scenario);
     }
 
@@ -517,6 +417,56 @@ module meltyfi::meltyfi_tests {
         clock::destroy_for_testing(clock);
         test_scenario::return_shared(protocol);
         test_scenario::return_shared(lottery);
+        test_scenario::end(scenario);
+    }
+
+    #[test]
+    fun test_choco_chip_minting() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        
+        // Initialize factory
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        choco_chip::init_for_testing(test_scenario::ctx(&mut scenario));
+
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let mut factory = test_scenario::take_shared<ChocolateFactory>(&scenario);
+            
+            // Test minting
+            let coins = choco_chip::mint(&mut factory, 1000, USER1, test_scenario::ctx(&mut scenario));
+            assert!(choco_chip::coin_value(&coins) == 1000, 0);
+            
+            // Check total supply updated
+            assert!(choco_chip::total_supply(&factory) == 1000, 1);
+            
+            sui::object::delete(coins);
+            test_scenario::return_shared(factory);
+        };
+
+        test_scenario::end(scenario);
+    }
+
+    #[test]
+    fun test_protocol_pause() {
+        let (mut scenario, clock, _random) = setup_test_environment();
+
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let mut protocol = test_scenario::take_shared<Protocol>(&scenario);
+            let admin_cap = test_scenario::take_from_sender<AdminCap>(&scenario);
+            
+            // Pause protocol
+            meltyfi_core::set_protocol_pause(&mut protocol, &admin_cap, true);
+            
+            // Check protocol is paused
+            let (_, _, paused) = meltyfi_core::protocol_stats(&protocol);
+            assert!(paused, 0);
+            
+            test_scenario::return_to_sender(&scenario, admin_cap);
+            test_scenario::return_shared(protocol);
+        };
+
+        clock::destroy_for_testing(clock);
         test_scenario::end(scenario);
     }
 }

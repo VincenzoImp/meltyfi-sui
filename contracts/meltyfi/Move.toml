@@ -1,15 +1,14 @@
 [package]
 name = "meltyfi"
-edition = "2024.beta"
 version = "1.0.0"
+license = "MIT"
+authors = ["MeltyFi Team"]
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "framework/testnet" }
 
 [addresses]
 meltyfi = "0x0"
-
-[dev-dependencies]
-
-[dev-addresses]
-# Testnet configuration for MeltyFi
+sui = "0x2"
+std = "0x1"

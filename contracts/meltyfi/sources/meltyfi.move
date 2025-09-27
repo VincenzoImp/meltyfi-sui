@@ -6,7 +6,7 @@ module meltyfi::meltyfi {
     use meltyfi::wonka_bars::{Self, WonkaBars};
     
     // Re-export key types for external modules
-    public use fun meltyfi_core::create_lottery;
+    public use fun meltyfi_core::create_lottery as Protocol.create_lottery;
     public use fun meltyfi_core::buy_wonkabars;
     public use fun meltyfi_core::redeem_wonkabars;
     public use fun meltyfi_core::repay_loan;
@@ -19,7 +19,7 @@ module meltyfi::meltyfi {
     public use fun meltyfi_core::is_lottery_winner;
     
     // Re-export ChocoChip functions
-    public use fun choco_chip::mint as mint_choco;
+    public use fun choco_chip::mint as ChocolateFactory.mint_choco;
     public use fun choco_chip::total_supply as choco_total_supply;
     public use fun choco_chip::is_authorized_minter;
     
