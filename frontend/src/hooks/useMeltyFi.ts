@@ -262,11 +262,7 @@ export function useMeltyFi() {
             });
 
             const result = await signAndExecuteTransaction({
-                transaction: tx,
-                options: {
-                    showEffects: true,
-                    showObjectChanges: true,
-                },
+                transaction: tx
             });
 
             return result;
@@ -309,11 +305,7 @@ export function useMeltyFi() {
             });
 
             const result = await signAndExecuteTransaction({
-                transaction: tx,
-                options: {
-                    showEffects: true,
-                    showObjectChanges: true,
-                },
+                transaction: tx
             });
 
             return result;
@@ -348,11 +340,7 @@ export function useMeltyFi() {
             });
 
             const result = await signAndExecuteTransaction({
-                transaction: tx,
-                options: {
-                    showEffects: true,
-                    showObjectChanges: true,
-                },
+                transaction: tx
             });
 
             return result;
@@ -392,11 +380,7 @@ export function useMeltyFi() {
             });
 
             const result = await signAndExecuteTransaction({
-                transaction: tx,
-                options: {
-                    showEffects: true,
-                    showObjectChanges: true,
-                },
+                transaction: tx
             });
 
             return result;
