@@ -1,12 +1,11 @@
 /// ChocoChip - Governance token for MeltyFi Protocol
 module meltyfi::choco_chip {
-    use std::vector;
     use sui::coin::{Self, Coin, TreasuryCap};
     use sui::tx_context::{Self, TxContext};
     use sui::url;
     use sui::event;
     use sui::transfer;
-    use sui::coin_registry::{Self, Currency};
+    use sui::object;
 
     // ======== Error Codes ========
     const ENotAuthorized: u64 = 1;
@@ -60,8 +59,8 @@ module meltyfi::choco_chip {
     // ======== Initialization ========
 
     fun init(witness: CHOCO_CHIP, ctx: &mut TxContext) {
-        // Create currency using the new Sui framework method
-        let currency = coin_registry::new_currency_with_otw(
+        // Create currency using the standard coin framework
+        let (treasury_cap, metadata) = coin::create_currency(
             witness,
             DECIMALS,
             b"CHOC",
@@ -71,33 +70,38 @@ module meltyfi::choco_chip {
             ctx
         );
 
-        let treasury_cap = coin::treasury_cap(&currency);
-
         let mut factory = ChocolateFactory {
-            id: sui::object::new(ctx),
+            id: object::new(ctx),
             treasury_cap,
             total_supply: 0,
-            authorized_minters: vector::empty(),
+            authorized_minters: std::vector::empty(),
             max_supply: MAX_SUPPLY,
         };
 
         let admin = FactoryAdmin {
-            id: sui::object::new(ctx),
+            id: object::new(ctx),
         };
 
         // Add the admin as an authorized minter initially
         let admin_address = tx_context::sender(ctx);
-        vector::push_back(&mut factory.authorized_minters, admin_address);
+        std::vector::push_back(&mut factory.authorized_minters, admin_address);
 
-        // Freeze the currency metadata
-        transfer::public_freeze_object(coin::metadata(&currency));
+        // Freeze the currency metadata and share the factory
+        transfer::public_freeze_object(metadata);
         transfer::share_object(factory);
         transfer::transfer(admin, admin_address);
+
+        event::emit(ChocolateMinted {
+            recipient: admin_address,
+            amount: 0,
+            reason: b"Factory initialized",
+            minter: admin_address,
+        });
     }
 
     // ======== Public Functions ========
 
-    /// Mint ChocoChips to a recipient - FIXED IMPLEMENTATION
+    /// Mint ChocoChips and return to caller (FIXED IMPLEMENTATION)
     public fun mint(
         factory: &mut ChocolateFactory,
         amount: u64,
@@ -105,7 +109,7 @@ module meltyfi::choco_chip {
         ctx: &mut TxContext
     ): Coin<CHOCO_CHIP> {
         let minter = tx_context::sender(ctx);
-        assert!(vector::contains(&factory.authorized_minters, &minter), ENotAuthorized);
+        assert!(std::vector::contains(&factory.authorized_minters, &minter), ENotAuthorized);
         assert!(amount > 0, EInvalidAmount);
         assert!(factory.total_supply + amount <= factory.max_supply, EInsufficientSupply);
 
@@ -116,34 +120,6 @@ module meltyfi::choco_chip {
             recipient,
             amount,
             reason: b"lottery_reward",
-            minter,
-        });
-
-        // Transfer the minted coin to the recipient
-        transfer::public_transfer(minted_coin, recipient);
-        
-        // Return a zero coin for interface consistency
-        coin::zero(ctx)
-    }
-
-    /// Mint coins directly to the caller
-    public fun mint_to_sender(
-        factory: &mut ChocolateFactory,
-        amount: u64,
-        ctx: &mut TxContext
-    ): Coin<CHOCO_CHIP> {
-        let minter = tx_context::sender(ctx);
-        assert!(vector::contains(&factory.authorized_minters, &minter), ENotAuthorized);
-        assert!(amount > 0, EInvalidAmount);
-        assert!(factory.total_supply + amount <= factory.max_supply, EInsufficientSupply);
-
-        factory.total_supply = factory.total_supply + amount;
-        let minted_coin = coin::mint(&mut factory.treasury_cap, amount, ctx);
-
-        event::emit(ChocolateMinted {
-            recipient: minter,
-            amount,
-            reason: b"direct_mint",
             minter,
         });
 
@@ -159,14 +135,16 @@ module meltyfi::choco_chip {
         let amount = coin::value(&coin_to_burn);
         assert!(amount > 0, EInvalidAmount);
         
-        coin::burn(&mut factory.treasury_cap, coin_to_burn);
         factory.total_supply = factory.total_supply - amount;
+        coin::burn(&mut factory.treasury_cap, coin_to_burn);
 
         event::emit(SupplyBurned {
             amount,
             burned_by: tx_context::sender(ctx),
         });
     }
+
+    // ======== Admin Functions ========
 
     /// Authorize a new minter
     public fun authorize_minter(
@@ -175,14 +153,13 @@ module meltyfi::choco_chip {
         new_minter: address,
         ctx: &mut TxContext
     ) {
-        if (!vector::contains(&factory.authorized_minters, &new_minter)) {
-            vector::push_back(&mut factory.authorized_minters, new_minter);
-            
-            event::emit(MinterAuthorized {
-                minter: new_minter,
-                authorized_by: tx_context::sender(ctx),
-            });
-        }
+        assert!(!std::vector::contains(&factory.authorized_minters, &new_minter), ENotAuthorized);
+        std::vector::push_back(&mut factory.authorized_minters, new_minter);
+
+        event::emit(MinterAuthorized {
+            minter: new_minter,
+            authorized_by: tx_context::sender(ctx),
+        });
     }
 
     /// Revoke minter authorization
@@ -192,22 +169,21 @@ module meltyfi::choco_chip {
         minter_to_revoke: address,
         ctx: &mut TxContext
     ) {
-        let (found, index) = vector::index_of(&factory.authorized_minters, &minter_to_revoke);
-        if (found) {
-            vector::remove(&mut factory.authorized_minters, index);
-            
-            event::emit(MinterRevoked {
-                minter: minter_to_revoke,
-                revoked_by: tx_context::sender(ctx),
-            });
-        }
+        let (found, index) = std::vector::index_of(&factory.authorized_minters, &minter_to_revoke);
+        assert!(found, ENotAuthorized);
+        std::vector::remove(&mut factory.authorized_minters, index);
+
+        event::emit(MinterRevoked {
+            minter: minter_to_revoke,
+            revoked_by: tx_context::sender(ctx),
+        });
     }
 
-    /// Update maximum supply (only admin)
+    /// Update maximum supply (only increase allowed)
     public fun update_max_supply(
         factory: &mut ChocolateFactory,
         _admin: &FactoryAdmin,
-        new_max_supply: u64,
+        new_max_supply: u64
     ) {
         assert!(new_max_supply >= factory.total_supply, EInvalidAmount);
         factory.max_supply = new_max_supply;
@@ -227,7 +203,7 @@ module meltyfi::choco_chip {
 
     /// Check if address is authorized minter
     public fun is_authorized_minter(factory: &ChocolateFactory, minter: address): bool {
-        vector::contains(&factory.authorized_minters, &minter)
+        std::vector::contains(&factory.authorized_minters, &minter)
     }
 
     /// Get all authorized minters
@@ -247,31 +223,9 @@ module meltyfi::choco_chip {
 
     // ======== Utility Functions ========
 
-    /// Split a coin into two parts
-    public fun split_coin(
-        coin_ref: &mut Coin<CHOCO_CHIP>,
-        amount: u64,
-        ctx: &mut TxContext
-    ): Coin<CHOCO_CHIP> {
-        coin::split(coin_ref, amount, ctx)
-    }
-
-    /// Join two coins together
-    public fun join_coins(
-        coin1: &mut Coin<CHOCO_CHIP>,
-        coin2: Coin<CHOCO_CHIP>
-    ) {
-        coin::join(coin1, coin2);
-    }
-
     /// Get coin value
     public fun coin_value(coin_ref: &Coin<CHOCO_CHIP>): u64 {
         coin::value(coin_ref)
-    }
-
-    /// Create zero coin
-    public fun zero_coin(ctx: &mut TxContext): Coin<CHOCO_CHIP> {
-        coin::zero(ctx)
     }
 
     // ======== Test Functions ========
