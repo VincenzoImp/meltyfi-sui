@@ -163,7 +163,7 @@ export function useMeltyFi() {
                 });
 
                 return objects.data
-                    .map(parseWonkaBar)
+                    .map((obj: any) => parseWonkaBar(obj))
                     .filter((wonkaBar): wonkaBar is WonkaBar => wonkaBar !== null);
             } catch (error) {
                 console.error('Error fetching WonkaBars:', error);
