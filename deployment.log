@@ -1,22 +1,23 @@
-Deployment started at Sab 27 Set 2025 11:22:26 CEST
-2025-09-27 11:22:26 - Deployment process started on testnet
-2025-09-27 11:22:26 - Checking prerequisites
-2025-09-27 11:22:26 - Prerequisites checked - Sui: 1.57.0, Node: 24.8.0
-2025-09-27 11:22:26 - Setting up Sui testnet environment
-2025-09-27 11:22:27 - Switched to testnet
-2025-09-27 11:22:27 - Active address: 0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2
-2025-09-27 11:22:28 - Current balance: 0 SUI
-2025-09-27 11:24:06 - Proceeding with low balance
-2025-09-27 11:24:06 - Installing dependencies
-2025-09-27 11:24:07 - Root dependencies installed
-2025-09-27 11:24:07 - Frontend dependencies installed
-2025-09-27 11:24:07 - Fixing Move configuration
-2025-09-27 11:24:07 - Backed up original Move.toml
-2025-09-27 11:24:07 - Move.toml configuration fixed for testnet
-2025-09-27 11:24:07 - Building contracts
-2025-09-27 11:24:11 - Contract compilation successful
-2025-09-27 11:24:12 - All tests passed
-2025-09-27 11:24:12 - Starting contract deployment to testnet
-2025-09-27 11:24:13 - Gas budget: 100000000 MIST
-2025-09-27 11:24:15 - ERROR: Deployment failed
-2025-09-27 11:24:15 - Cleanup completed
+[0;32m[2025-09-27 14:25:22] Starting MeltyFi Protocol deployment to Sui testnet...[0m
+[0;32m[2025-09-27 14:25:22] Checking prerequisites...[0m
+[0;32m✅ All prerequisites met[0m
+[0;32m[2025-09-27 14:25:22] Setting up Sui environment...[0m
+[0;32m[2025-09-27 14:25:22] Active address: 0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2[0m
+[0;33m[2025-09-27 14:25:22] WARNING: Low SUI balance detected (0 MIST). You might need more SUI for deployment.[0m
+[0;34m[2025-09-27 14:25:22] Get testnet SUI from: https://faucet.testnet.sui.io/gas[0m
+[0;32m✅ Sui environment configured for testnet[0m
+[0;32m[2025-09-27 14:25:41] Installing dependencies...[0m
+[0;34m[2025-09-27 14:25:41] Installing root dependencies...[0m
+[0;34m[2025-09-27 14:25:42] Installing frontend dependencies...[0m
+[0;32m✅ Dependencies installed[0m
+[0;32m[2025-09-27 14:25:43] Building Move contracts...[0m
+Failed to build Move modules: Unable to parse Move package manifest
+
+Caused by:
+    unexpected character found: `/` at line 1 column 1.
+Unable to parse Move package manifest
+
+Caused by:
+    unexpected character found: `/` at line 1 column 1
+[0;32m✅ Contracts built successfully[0m
+[0;32m[2025-09-27 14:25:43] Deploying contracts to Sui testnet...[0m

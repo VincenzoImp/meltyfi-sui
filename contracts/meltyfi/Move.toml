@@ -2,14 +2,9 @@
 name = "meltyfi"
 edition = "2024.beta"
 version = "1.0.0"
-license = "MIT"
-authors = ["MeltyFi Team"]
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
 
 [addresses]
 meltyfi = "0x0"
-
-[dev-addresses]
-meltyfi = "0x42"
