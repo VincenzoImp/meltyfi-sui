@@ -318,6 +318,7 @@ module meltyfi::core {
         assert!(!protocol.paused, EProtocolPaused);
         assert!(lottery.state == LOTTERY_ACTIVE, EInvalidLotteryState);
         
+
         let current_time = clock::timestamp_ms(clock);
         let mut final_state = LOTTERY_EXPIRED;
         let mut winner = option::none<address>();
@@ -325,22 +326,17 @@ module meltyfi::core {
 
         // Check if lottery has expired or if it's concluded naturally
         if (current_time >= lottery.expiration_date || lottery.sold_count == lottery.max_supply) {
-            if (lottery.sold_count > 0) {
-                // Draw winner using Sui's randomness
+            let participants = &lottery.participants;
+            let participant_addresses = vec_map::keys(participants);
+            let participant_count = vector::length(&participant_addresses);
+            if (participant_count > 0) {
+                // Draw winner using Sui's randomness: pick a random participant
                 let mut rng = random::new_generator(random, ctx);
-                winning_ticket = random::generate_u64_in_range(&mut rng, 1, lottery.sold_count + 1);
-                
-                // Find winner based on ticket number (simplified logic)
-                let participants = &lottery.participants;
-                let participant_addresses = vec_map::keys(participants);
-                let participant_count = vector::length(&participant_addresses);
-                
-                if (participant_count > 0) {
-                    let winner_index = winning_ticket % participant_count;
-                    let winner_addr = *vector::borrow(&participant_addresses, winner_index);
-                    winner = option::some(winner_addr);
-                    final_state = LOTTERY_CONCLUDED;
-                };
+                let winner_index = random::generate_u64_in_range(&mut rng, 0, participant_count);
+                let winner_addr = *vector::borrow(&participant_addresses, winner_index);
+                winner = option::some(winner_addr);
+                final_state = LOTTERY_CONCLUDED;
+                winning_ticket = winner_index; // Optionally store the index as the 'winning_ticket'
             };
         };
 
