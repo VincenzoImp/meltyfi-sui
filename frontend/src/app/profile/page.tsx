@@ -3,7 +3,7 @@
 import { getExplorerUrl } from '@/constants/contracts';
 import { useMeltyFi } from '@/hooks/useMeltyFi';
 import { shortenAddress } from '@/lib/utils';
-import { useBalance, useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount, useSuiClientQuery } from '@mysten/dapp-kit';
 import {
     AlertCircle,
     CheckCircle,
@@ -31,7 +31,11 @@ function formatChocoChips(amount: string) {
 
 export default function ProfilePage() {
     const currentAccount = useCurrentAccount();
-    const { data: balance } = useBalance({ address: currentAccount?.address });
+    const { data: balance } = useSuiClientQuery(
+        'getBalance',
+        { owner: currentAccount?.address || '' },
+        { enabled: !!currentAccount?.address }
+    );
     const {
         userStats,
         lotteries,

@@ -18,3 +18,16 @@
 [0;34m[2025-09-27 16:02:19] Publishing Move package (gas budget: 100000000 MIST)...[0m
 [0;31m[2025-09-27 16:02:23] ERROR: Failed to extract package ID from deployment output[0m
 [0;33m[2025-09-27 16:02:23] WARNING: Deployment failed, but don't worry! Here's what you can do:[0m
+[0;34m[2025-09-27 16:52:04] Cleaned previous build artifacts[0m
+[0;34m[2025-09-27 16:52:04] Compiling Move contracts...[0m
+[0;33m[2025-09-27 16:52:05] WARNING: Build completed with warnings:[0m
+[0;32m✅ Contracts compiled successfully[0m
+[0;34m[2025-09-27 16:52:05] Running Move tests...[0m
+[0;33m[2025-09-27 16:52:06] WARNING: Some tests failed, but continuing with deployment[0m
+[0;34m[2025-09-27 16:52:06] Publishing Move package (gas budget: 100000000 MIST)...[0m
+[0;31m[2025-09-27 16:52:08] ERROR: Failed to extract package ID from deployment output[0m
+[0;33m[2025-09-27 16:52:08] WARNING: Deployment failed, but don't worry! Here's what you can do:[0m
+[0;34m[2025-09-27 16:59:59] Cleaned previous build artifacts[0m
+[0;34m[2025-09-27 16:59:59] Compiling Move contracts...[0m
+[0;34m[2025-09-27 17:00:02] Running Move tests...[0m
+[0;34m[2025-09-27 17:00:05] Publishing Move package...[0m

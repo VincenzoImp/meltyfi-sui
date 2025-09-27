@@ -1,0 +1,14 @@
+{
+  "network": "testnet",
+  "deployer": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+  "timestamp": "2025-09-27T15:07:42Z",
+  "packageId": "0x0563ae15b3c34fb4e67d8ef102173761f100eb5d85462922954c43798847eb33",
+  "objects": {
+    "adminCap": "",
+    "protocol": "",
+    "chocolateFactory": "",
+    "factoryAdmin": "",
+    "upgradeCap": "",
+    "coinMetadata": ""
+  }
+}
