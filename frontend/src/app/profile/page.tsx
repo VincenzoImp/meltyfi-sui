@@ -40,8 +40,8 @@ export default function ProfilePage() {
         userStats,
         lotteries,
         userWonkaBars,
-        lotteriesLoading,
-        wonkaBarsLoading
+        isLoadingLotteries,
+        isLoadingWonkaBars
     } = useMeltyFi();
 
     const [copiedAddress, setCopiedAddress] = useState(false);
@@ -211,7 +211,7 @@ export default function ProfilePage() {
                         )}
                     </div>
 
-                    {lotteriesLoading ? (
+                    {isLoadingLotteries ? (
                         <div className="text-center py-12">
                             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                             <p className="text-white/60 mt-4">Loading your lotteries...</p>
@@ -292,7 +292,7 @@ export default function ProfilePage() {
                         )}
                     </div>
 
-                    {wonkaBarsLoading ? (
+                    {isLoadingWonkaBars ? (
                         <div className="text-center py-12">
                             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                             <p className="text-white/60 mt-4">Loading your WonkaBars...</p>
@@ -323,7 +323,7 @@ export default function ProfilePage() {
                                         <div className="flex items-center justify-between mb-3">
                                             <Ticket className="w-6 h-6 text-pink-400" />
                                             <span className="text-xs text-white/60">
-                                                Qty: {wonkaBar.quantity}
+                                                Qty: {wonkaBar.ticketCount}
                                             </span>
                                         </div>
 

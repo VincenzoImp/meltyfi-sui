@@ -163,26 +163,40 @@ BUILDING meltyfi
     [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
 
 [0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
-    [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:406:17
+    [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:402:17
     [0m[34m│[0m
-[0m[34m369[0m [0m[34m│[0m     ): Option<T> {
+[0m[34m365[0m [0m[34m│[0m     ): Option<T> {
     [0m[34m│[0m        [0m[34m---------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
-[0m[34m370[0m [0m[34m│[0m         assert!(lottery.state != LOTTERY_ACTIVE, EInvalidLotteryState);
-[0m[34m371[0m [0m[34m│[0m         let claimer = tx_context::sender(ctx);
+[0m[34m366[0m [0m[34m│[0m         assert!(lottery.state != LOTTERY_ACTIVE, EInvalidLotteryState);
+[0m[34m367[0m [0m[34m│[0m         let claimer = tx_context::sender(ctx);
     [0m[34m│[0m                       [0m[34m-----------------------[0m [0m[34mTransaction sender address coming from here[0m
     [0m[34m·[0m
-[0m[34m406[0m [0m[34m│[0m                 [0m[33mtransfer::public_transfer(refund_coin, claimer)[0m;
+[0m[34m402[0m [0m[34m│[0m                 [0m[33mtransfer::public_transfer(refund_coin, claimer)[0m;
     [0m[34m│[0m                 [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mTransfer of an object to transaction sender address[0m
     [0m[34m│[0m
     [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
 
 [0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
-    [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:476:9
+    [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:441:13
     [0m[34m│[0m
-[0m[34m466[0m [0m[34m│[0m     public fun withdraw_protocol_fees(
+[0m[34m417[0m [0m[34m│[0m     public fun cancel_lottery(
+    [0m[34m│[0m                [0m[34m--------------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
+    [0m[34m·[0m
+[0m[34m428[0m [0m[34m│[0m         let sender = tx_context::sender(ctx);
+    [0m[34m│[0m                      [0m[34m-----------------------[0m [0m[34mTransaction sender address coming from here[0m
+    [0m[34m·[0m
+[0m[34m441[0m [0m[34m│[0m             [0m[33mtransfer::public_transfer(coin::from_balance(payment_balance, ctx), sender)[0m;
+    [0m[34m│[0m             [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mTransfer of an object to transaction sender address[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
+    [0m[34m┌─[0m /Users/vincenzo/Documents/GitHub/meltyfi-sui/contracts/meltyfi/sources/core.move:491:9
+    [0m[34m│[0m
+[0m[34m481[0m [0m[34m│[0m     public fun withdraw_protocol_fees(
     [0m[34m│[0m                [0m[34m----------------------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
     [0m[34m·[0m
-[0m[34m476[0m [0m[34m│[0m         [0m[33mtransfer::public_transfer(fee_coin, tx_context::sender(ctx))[0m;
+[0m[34m491[0m [0m[34m│[0m         [0m[33mtransfer::public_transfer(fee_coin, tx_context::sender(ctx))[0m;
     [0m[34m│[0m         [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
     [0m[34m│[0m         [0m[33m│[0m                                   [0m[34m│[0m
     [0m[34m│[0m         [0m[33m│[0m                                   [0m[34mTransaction sender address coming from here[0m
@@ -195,7 +209,7 @@ Please report feedback on the linter warnings at https://forums.sui.io
 Total number of linter warnings suppressed: 2 (unique lints: 1)
 Skipping dependency verification
 {
-  "digest": "CT57shcwd9rLgtXiEPDoC7jmFNSAHae9Ww9VMWhHnc7T",
+  "digest": "C4dBrcTR5YwHatwx8GnAkp1XBhegdR29MqiVX2wGLxyG",
   "transaction": {
     "data": {
       "messageVersion": "v1",
@@ -234,8 +248,8 @@ Skipping dependency verification
         "payment": [
           {
             "objectId": "0x43dfc736a06b51b8321ce3fcc9633beb9cc8782997140bc42153deddcf28663f",
-            "version": 349180655,
-            "digest": "D9idox8D4NqAqLj6GSubxojJUghS9XSuQuhc5TssYQfr"
+            "version": 349180657,
+            "digest": "88uvFJksNq9dUDFdvvLwnmH2b8x81oToZGiWAnPoWFQc"
           }
         ],
         "owner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
@@ -244,7 +258,7 @@ Skipping dependency verification
       }
     },
     "txSignatures": [
-      "ACdM27Ph3Q746P6fEsi5eDoigIIJwme4wmCB0FIL3qIfypQyF2GzypVc3XfxOMS3k7LJDGOVLE8uEDuHUzvJjwrqXLyjDTyj5tphC4L6MVAf8BdNK+A7fYKLVrJVi5Uhxg=="
+      "AHZQ3Q7ZQvfb+24SfFRkA7tcOLQwriK5VpOYdiv9cS6ve+lR6KdFSKuyd6N+UyrxACiPPYlPTsTk8bkJqXrlswTqXLyjDTyj5tphC4L6MVAf8BdNK+A7fYKLVrJVi5Uhxg=="
     ]
   },
   "effects": {
@@ -255,46 +269,26 @@ Skipping dependency verification
     "executedEpoch": "870",
     "gasUsed": {
       "computationCost": "1000000",
-      "storageCost": "76296400",
+      "storageCost": "76972800",
       "storageRebate": "978120",
       "nonRefundableStorageFee": "9880"
     },
     "modifiedAtVersions": [
       {
         "objectId": "0x43dfc736a06b51b8321ce3fcc9633beb9cc8782997140bc42153deddcf28663f",
-        "sequenceNumber": "349180655"
+        "sequenceNumber": "349180657"
       }
     ],
-    "transactionDigest": "CT57shcwd9rLgtXiEPDoC7jmFNSAHae9Ww9VMWhHnc7T",
+    "transactionDigest": "C4dBrcTR5YwHatwx8GnAkp1XBhegdR29MqiVX2wGLxyG",
     "created": [
       {
         "owner": {
           "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
         },
         "reference": {
-          "objectId": "0x0d179676dde5892dad4e145e973e0a7a92e9810f65847512be3adb52890bc4e1",
-          "version": 349180656,
-          "digest": "3B6zjuyM1fePT5fPFAfhpurVWqGfCrV2tuRL6Gc1X8kh"
-        }
-      },
-      {
-        "owner": "Immutable",
-        "reference": {
-          "objectId": "0x1cef20cb1dce458165c807299cf0ee4c5f2899b82e613c84bb66315669778d72",
-          "version": 349180656,
-          "digest": "B5UDTvPokKZzKWvggzwsXBGw52RZkah9ARfHCdvG7Ar9"
-        }
-      },
-      {
-        "owner": {
-          "Shared": {
-            "initial_shared_version": 349180656
-          }
-        },
-        "reference": {
-          "objectId": "0x3f5b59c8eecddedfa14503dcdc6a02e0562afc5617a10746d3d21dd6444e279e",
-          "version": 349180656,
-          "digest": "8azEzdGtfaoRVA4drt8tgRG64vSeST5M1SZCT7oToR6U"
+          "objectId": "0x278a9613634968b085caa50e05e7994925a684313b0234b69dcc83e1c15b97d6",
+          "version": 349180658,
+          "digest": "13DP1cy6c5dgwtxXaobHaLV5MZmX6p7JUkPtfncbubyL"
         }
       },
       {
@@ -302,21 +296,17 @@ Skipping dependency verification
           "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
         },
         "reference": {
-          "objectId": "0x453218828df7e522991ef8287ae10d7e772f4561f9d92ca1def2d7c02bb445a1",
-          "version": 349180656,
-          "digest": "BGwxKPNWaZR27CYSBzfFPWDKovE6mvHv277VvdLxofQA"
+          "objectId": "0x29dc92e61dd3e9070e580307fbab796f3efb52e6c9e95ba324b79fda62135611",
+          "version": 349180658,
+          "digest": "9238Rxu9gYEZkKh8C7ZhJZNexmoigRyuX396uihSHgrX"
         }
       },
       {
-        "owner": {
-          "Shared": {
-            "initial_shared_version": 349180656
-          }
-        },
+        "owner": "Immutable",
         "reference": {
-          "objectId": "0x57706f117b6ecd7f39f4bbaa4f183cf80528a083b3e7d25e3a677634850fde88",
-          "version": 349180656,
-          "digest": "CM2NoAfLuc3iFEbZcECFjxCKYY9JrsxZaGJNE9xpqsAm"
+          "objectId": "0x32f583c7df2e465c2b0b645bdce054ff5765017c373ff5dfb05618446e3198b8",
+          "version": 349180658,
+          "digest": "9M1toYLJroy4N6fmGStWn4HC9krtdau1g3cjQrwfLsEA"
         }
       },
       {
@@ -324,17 +314,41 @@ Skipping dependency verification
           "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
         },
         "reference": {
-          "objectId": "0x8922aa0705ca1c9ffadfb2fb6b473df49a6fbb276601df46383f78688e5a5f1e",
-          "version": 349180656,
-          "digest": "FWDBvVgkRvfEhJF8dVkStCrzKHKrn57xggConVwwex5L"
+          "objectId": "0x67f59ec64bb996298464f523530ec7fcbf80e39d4f660917ff309d84abb6d766",
+          "version": 349180658,
+          "digest": "2KSk2PQZKvxPgN19NfYJVo1hazFxdFZCJXCN5dF5v4Sx"
+        }
+      },
+      {
+        "owner": {
+          "Shared": {
+            "initial_shared_version": 349180658
+          }
+        },
+        "reference": {
+          "objectId": "0xa06c147ba8e748e49b20f6d3240da5b17c373978d128098436043377e9dc0241",
+          "version": 349180658,
+          "digest": "G8NjgLKyFQMXQrCDAWa7X7C9mic1dwUEnq86r9FPs8g1"
+        }
+      },
+      {
+        "owner": {
+          "Shared": {
+            "initial_shared_version": 349180658
+          }
+        },
+        "reference": {
+          "objectId": "0xcd5006cfda2e2e0c6aee03ecfab5c26b2153018b072ea6f6d6af585465f4f6cd",
+          "version": 349180658,
+          "digest": "6djj2tpqUdBpBcBZWKxSUja1rDuD8Xykvxend9MusCN2"
         }
       },
       {
         "owner": "Immutable",
         "reference": {
-          "objectId": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1",
+          "objectId": "0xd1cf793770fbdba170c9dddd7fff26309416a3d7dac917ee5446d992959185f1",
           "version": 1,
-          "digest": "HDNZqSHUSrb6TtND3owbyh9NyDGxprA5jK3ffhkJrCDP"
+          "digest": "4cdAPGSFUPuJE8j8fHW1gHuJgmiY8X4VF2KHpSzkXbxu"
         }
       }
     ],
@@ -345,8 +359,8 @@ Skipping dependency verification
         },
         "reference": {
           "objectId": "0x43dfc736a06b51b8321ce3fcc9633beb9cc8782997140bc42153deddcf28663f",
-          "version": 349180656,
-          "digest": "CvKghJAywfo5RpwdVULekeskA9LxknJCKpbr6PWguVVJ"
+          "version": 349180658,
+          "digest": "4YzcvdnsBoHzFQ4NFJkVdih11Z6SjkWtwGpukcHUJxdN"
         }
       }
     ],
@@ -356,27 +370,27 @@ Skipping dependency verification
       },
       "reference": {
         "objectId": "0x43dfc736a06b51b8321ce3fcc9633beb9cc8782997140bc42153deddcf28663f",
-        "version": 349180656,
-        "digest": "CvKghJAywfo5RpwdVULekeskA9LxknJCKpbr6PWguVVJ"
+        "version": 349180658,
+        "digest": "4YzcvdnsBoHzFQ4NFJkVdih11Z6SjkWtwGpukcHUJxdN"
       }
     },
-    "eventsDigest": "Dh5shwey5G4hhfEB41rdfTFPcoPyQFRoSXjAHszTmKZC",
+    "eventsDigest": "EQuomp1vRmDF6FxiyFGxzgB5gaN4vb2ZNpLtgdsCTkL6",
     "dependencies": [
       "2dkJtqsoQcyCZJvjZnskNVPQeynwVtwCcA9goAru6tTi",
-      "Ae7HNqmmuXfkqvrt4X3wfa4bm43FLm4h6GprkrCH49rL",
+      "B9kPNqmwt6pinVats7mkFyVK6dci3vhSFYftmKGPLmJj",
       "Dd9pn1zFcSJjinxQewFd2gQdR4XKsHxFioD5MYnwLZQz"
     ]
   },
   "events": [
     {
       "id": {
-        "txDigest": "CT57shcwd9rLgtXiEPDoC7jmFNSAHae9Ww9VMWhHnc7T",
+        "txDigest": "C4dBrcTR5YwHatwx8GnAkp1XBhegdR29MqiVX2wGLxyG",
         "eventSeq": "0"
       },
-      "packageId": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1",
+      "packageId": "0xd1cf793770fbdba170c9dddd7fff26309416a3d7dac917ee5446d992959185f1",
       "transactionModule": "core",
       "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
-      "type": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::core::ProtocolUpdated",
+      "type": "0xd1cf793770fbdba170c9dddd7fff26309416a3d7dac917ee5446d992959185f1::core::ProtocolUpdated",
       "parsedJson": {
         "action": "protocol_initialized",
         "admin": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
@@ -395,9 +409,9 @@ Skipping dependency verification
       },
       "objectType": "0x2::coin::Coin<0x2::sui::SUI>",
       "objectId": "0x43dfc736a06b51b8321ce3fcc9633beb9cc8782997140bc42153deddcf28663f",
-      "version": "349180656",
-      "previousVersion": "349180655",
-      "digest": "CvKghJAywfo5RpwdVULekeskA9LxknJCKpbr6PWguVVJ"
+      "version": "349180658",
+      "previousVersion": "349180657",
+      "digest": "4YzcvdnsBoHzFQ4NFJkVdih11Z6SjkWtwGpukcHUJxdN"
     },
     {
       "type": "created",
@@ -405,56 +419,10 @@ Skipping dependency verification
       "owner": {
         "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
       },
-      "objectType": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::core::AdminCap",
-      "objectId": "0x0d179676dde5892dad4e145e973e0a7a92e9810f65847512be3adb52890bc4e1",
-      "version": "349180656",
-      "digest": "3B6zjuyM1fePT5fPFAfhpurVWqGfCrV2tuRL6Gc1X8kh"
-    },
-    {
-      "type": "created",
-      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
-      "owner": "Immutable",
-      "objectType": "0x2::coin::CoinMetadata<0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::choco_chip::CHOCO_CHIP>",
-      "objectId": "0x1cef20cb1dce458165c807299cf0ee4c5f2899b82e613c84bb66315669778d72",
-      "version": "349180656",
-      "digest": "B5UDTvPokKZzKWvggzwsXBGw52RZkah9ARfHCdvG7Ar9"
-    },
-    {
-      "type": "created",
-      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
-      "owner": {
-        "Shared": {
-          "initial_shared_version": 349180656
-        }
-      },
-      "objectType": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::core::Protocol",
-      "objectId": "0x3f5b59c8eecddedfa14503dcdc6a02e0562afc5617a10746d3d21dd6444e279e",
-      "version": "349180656",
-      "digest": "8azEzdGtfaoRVA4drt8tgRG64vSeST5M1SZCT7oToR6U"
-    },
-    {
-      "type": "created",
-      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
-      "owner": {
-        "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
-      },
-      "objectType": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::choco_chip::FactoryAdmin",
-      "objectId": "0x453218828df7e522991ef8287ae10d7e772f4561f9d92ca1def2d7c02bb445a1",
-      "version": "349180656",
-      "digest": "BGwxKPNWaZR27CYSBzfFPWDKovE6mvHv277VvdLxofQA"
-    },
-    {
-      "type": "created",
-      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
-      "owner": {
-        "Shared": {
-          "initial_shared_version": 349180656
-        }
-      },
-      "objectType": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1::choco_chip::ChocolateFactory",
-      "objectId": "0x57706f117b6ecd7f39f4bbaa4f183cf80528a083b3e7d25e3a677634850fde88",
-      "version": "349180656",
-      "digest": "CM2NoAfLuc3iFEbZcECFjxCKYY9JrsxZaGJNE9xpqsAm"
+      "objectType": "0xd1cf793770fbdba170c9dddd7fff26309416a3d7dac917ee5446d992959185f1::core::AdminCap",
+      "objectId": "0x278a9613634968b085caa50e05e7994925a684313b0234b69dcc83e1c15b97d6",
+      "version": "349180658",
+      "digest": "13DP1cy6c5dgwtxXaobHaLV5MZmX6p7JUkPtfncbubyL"
     },
     {
       "type": "created",
@@ -463,15 +431,61 @@ Skipping dependency verification
         "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
       },
       "objectType": "0x2::package::UpgradeCap",
-      "objectId": "0x8922aa0705ca1c9ffadfb2fb6b473df49a6fbb276601df46383f78688e5a5f1e",
-      "version": "349180656",
-      "digest": "FWDBvVgkRvfEhJF8dVkStCrzKHKrn57xggConVwwex5L"
+      "objectId": "0x29dc92e61dd3e9070e580307fbab796f3efb52e6c9e95ba324b79fda62135611",
+      "version": "349180658",
+      "digest": "9238Rxu9gYEZkKh8C7ZhJZNexmoigRyuX396uihSHgrX"
+    },
+    {
+      "type": "created",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "owner": "Immutable",
+      "objectType": "0x2::coin::CoinMetadata<0xd1cf793770fbdba170c9dddd7fff26309416a3d7dac917ee5446d992959185f1::choco_chip::CHOCO_CHIP>",
+      "objectId": "0x32f583c7df2e465c2b0b645bdce054ff5765017c373ff5dfb05618446e3198b8",
+      "version": "349180658",
+      "digest": "9M1toYLJroy4N6fmGStWn4HC9krtdau1g3cjQrwfLsEA"
+    },
+    {
+      "type": "created",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "owner": {
+        "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
+      },
+      "objectType": "0xd1cf793770fbdba170c9dddd7fff26309416a3d7dac917ee5446d992959185f1::choco_chip::FactoryAdmin",
+      "objectId": "0x67f59ec64bb996298464f523530ec7fcbf80e39d4f660917ff309d84abb6d766",
+      "version": "349180658",
+      "digest": "2KSk2PQZKvxPgN19NfYJVo1hazFxdFZCJXCN5dF5v4Sx"
+    },
+    {
+      "type": "created",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "owner": {
+        "Shared": {
+          "initial_shared_version": 349180658
+        }
+      },
+      "objectType": "0xd1cf793770fbdba170c9dddd7fff26309416a3d7dac917ee5446d992959185f1::choco_chip::ChocolateFactory",
+      "objectId": "0xa06c147ba8e748e49b20f6d3240da5b17c373978d128098436043377e9dc0241",
+      "version": "349180658",
+      "digest": "G8NjgLKyFQMXQrCDAWa7X7C9mic1dwUEnq86r9FPs8g1"
+    },
+    {
+      "type": "created",
+      "sender": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2",
+      "owner": {
+        "Shared": {
+          "initial_shared_version": 349180658
+        }
+      },
+      "objectType": "0xd1cf793770fbdba170c9dddd7fff26309416a3d7dac917ee5446d992959185f1::core::Protocol",
+      "objectId": "0xcd5006cfda2e2e0c6aee03ecfab5c26b2153018b072ea6f6d6af585465f4f6cd",
+      "version": "349180658",
+      "digest": "6djj2tpqUdBpBcBZWKxSUja1rDuD8Xykvxend9MusCN2"
     },
     {
       "type": "published",
-      "packageId": "0xed49a3c031c8a2a3fdf175267c071c0a3b38a562c651cd46eda01330c40be3c1",
+      "packageId": "0xd1cf793770fbdba170c9dddd7fff26309416a3d7dac917ee5446d992959185f1",
       "version": "1",
-      "digest": "HDNZqSHUSrb6TtND3owbyh9NyDGxprA5jK3ffhkJrCDP",
+      "digest": "4cdAPGSFUPuJE8j8fHW1gHuJgmiY8X4VF2KHpSzkXbxu",
       "modules": [
         "choco_chip",
         "core",
@@ -485,10 +499,10 @@ Skipping dependency verification
         "AddressOwner": "0x25d9c6fb66db81d2d794625d0c9c7294ddfb84c48a4c81557e321da8f457ced2"
       },
       "coinType": "0x2::sui::SUI",
-      "amount": "-76318280"
+      "amount": "-76994680"
     }
   ],
-  "timestampMs": "1758987522302",
+  "timestampMs": "1758989478279",
   "confirmedLocalExecution": true,
-  "checkpoint": "246115434"
+  "checkpoint": "246124130"
 }

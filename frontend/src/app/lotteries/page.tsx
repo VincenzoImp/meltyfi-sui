@@ -56,12 +56,12 @@ function LotteryCard({ lottery, onBuyWonkaBars, isBuying, isConnected }: Lottery
                 {/* Status Badge */}
                 <div className="absolute top-4 left-4">
                     <div className={`px-2 py-1 rounded-full text-xs font-medium ${lottery.state === 'ACTIVE' && !isExpired && !isSoldOut
-                            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                            : isExpired
-                                ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                                : isSoldOut
-                                    ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                                    : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                        : isExpired
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            : isSoldOut
+                                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                                : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
                         }`}>
                         {isExpired ? 'EXPIRED' : isSoldOut ? 'SOLD OUT' : lottery.state}
                     </div>
@@ -186,7 +186,7 @@ export default function LotteriesPage() {
         lotteries,
         buyWonkaBars,
         isBuyingWonkaBars,
-        lotteriesLoading
+        isLoadingLotteries
     } = useMeltyFi();
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -195,7 +195,7 @@ export default function LotteriesPage() {
 
     const handleBuyWonkaBars = async (lotteryId: string, quantity: number, totalCost: string) => {
         try {
-            await buyWonkaBars({ lotteryId, quantity, totalCost });
+            await buyWonkaBars({ lotteryId, quantity, payment: totalCost });
         } catch (error) {
             console.error('Failed to buy WonkaBars:', error);
         }
@@ -321,7 +321,7 @@ export default function LotteriesPage() {
                 </div>
 
                 {/* Loading State */}
-                {lotteriesLoading && (
+                {isLoadingLotteries && (
                     <div className="text-center py-12">
                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                         <p className="text-white/60 mt-4">Loading lotteries...</p>
@@ -329,7 +329,7 @@ export default function LotteriesPage() {
                 )}
 
                 {/* No Results */}
-                {!lotteriesLoading && filteredLotteries.length === 0 && (
+                {!isLoadingLotteries && filteredLotteries.length === 0 && (
                     <div className="text-center py-12">
                         <Ticket className="w-16 h-16 text-white/40 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold text-white mb-2">
@@ -345,7 +345,7 @@ export default function LotteriesPage() {
                 )}
 
                 {/* Lotteries Grid */}
-                {!lotteriesLoading && filteredLotteries.length > 0 && (
+                {!isLoadingLotteries && filteredLotteries.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredLotteries.map((lottery) => (
                             <LotteryCard
@@ -360,7 +360,7 @@ export default function LotteriesPage() {
                 )}
 
                 {/* Connection Warning */}
-                {!currentAccount && !lotteriesLoading && (
+                {!currentAccount && !isLoadingLotteries && (
                     <div className="mt-8 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4">
                         <div className="flex items-center gap-2">
                             <AlertCircle className="w-5 h-5 text-yellow-400" />

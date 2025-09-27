@@ -318,6 +318,7 @@ module meltyfi::core {
         assert!(!protocol.paused, EProtocolPaused);
         assert!(lottery.state == LOTTERY_ACTIVE, EInvalidLotteryState);
         
+
         let current_time = clock::timestamp_ms(clock);
         let mut final_state = LOTTERY_EXPIRED;
         let mut winner = option::none<address>();
@@ -325,22 +326,17 @@ module meltyfi::core {
 
         // Check if lottery has expired or if it's concluded naturally
         if (current_time >= lottery.expiration_date || lottery.sold_count == lottery.max_supply) {
-            if (lottery.sold_count > 0) {
-                // Draw winner using Sui's randomness
+            let participants = &lottery.participants;
+            let participant_addresses = vec_map::keys(participants);
+            let participant_count = vector::length(&participant_addresses);
+            if (participant_count > 0) {
+                // Draw winner using Sui's randomness: pick a random participant
                 let mut rng = random::new_generator(random, ctx);
-                winning_ticket = random::generate_u64_in_range(&mut rng, 1, lottery.sold_count + 1);
-                
-                // Find winner based on ticket number (simplified logic)
-                let participants = &lottery.participants;
-                let participant_addresses = vec_map::keys(participants);
-                let participant_count = vector::length(&participant_addresses);
-                
-                if (participant_count > 0) {
-                    let winner_index = winning_ticket % participant_count;
-                    let winner_addr = *vector::borrow(&participant_addresses, winner_index);
-                    winner = option::some(winner_addr);
-                    final_state = LOTTERY_CONCLUDED;
-                };
+                let winner_index = random::generate_u64_in_range(&mut rng, 0, participant_count);
+                let winner_addr = *vector::borrow(&participant_addresses, winner_index);
+                winner = option::some(winner_addr);
+                final_state = LOTTERY_CONCLUDED;
+                winning_ticket = winner_index; // Optionally store the index as the 'winning_ticket'
             };
         };
 
@@ -422,15 +418,34 @@ module meltyfi::core {
         protocol: &mut Protocol,
         lottery: &mut Lottery,
         receipt: &LotteryReceipt,
+        repayment: Coin<SUI>,
         ctx: &mut TxContext
     ) {
         assert!(!protocol.paused, EProtocolPaused);
         assert!(lottery.state == LOTTERY_ACTIVE, EInvalidLotteryState);
         assert!(receipt.lottery_id == lottery.lottery_id, EInvalidAmount);
         assert!(receipt.owner == tx_context::sender(ctx), ENotLotteryOwner);
+        let sender = tx_context::sender(ctx);
+
+        // Owner must repay the loan (total_raised) when cancelling before expiration.
+        let payment_amount = coin::value(&repayment);
+        assert!(payment_amount >= lottery.total_raised, EInsufficientPayment);
+
+        let mut payment_balance = coin::into_balance(repayment);
+        let repay_balance = balance::split(&mut payment_balance, lottery.total_raised);
+        // Join the repayment into the lottery funds so participants can claim refunds
+        balance::join(&mut lottery.funds, repay_balance);
+
+        // Return any excess to sender
+        if (balance::value(&payment_balance) > 0) {
+            transfer::public_transfer(coin::from_balance(payment_balance, ctx), sender);
+        } else {
+            balance::destroy_zero(payment_balance);
+        };
+        
 
         lottery.state = LOTTERY_CANCELLED;
-        
+
         // Remove from active lotteries
         vec_map::remove(&mut protocol.active_lotteries, &lottery.lottery_id);
 

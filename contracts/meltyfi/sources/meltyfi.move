@@ -61,9 +61,10 @@ module meltyfi::meltyfi {
         protocol: &mut core::Protocol,
         lottery: &mut core::Lottery,
         receipt: &core::LotteryReceipt,
+        repayment: Coin<sui::sui::SUI>,
         ctx: &mut TxContext
     ) {
-        core::cancel_lottery(protocol, lottery, receipt, ctx)
+        core::cancel_lottery(protocol, lottery, receipt, repayment, ctx)
     }
     
     // ===== ChocoChip Token Functions =====

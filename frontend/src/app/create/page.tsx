@@ -2,7 +2,6 @@
 
 import { useMeltyFi } from '@/hooks/useMeltyFi';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { SuiObjectResponse } from '@mysten/sui/client';
 import {
     AlertCircle,
     CheckCircle,
@@ -25,6 +24,7 @@ interface NFT {
 export default function CreateLotteryPage() {
     const currentAccount = useCurrentAccount();
     const suiClient = useSuiClient();
+    // Update the type for createLottery argument to include expirationDate
     const { createLottery, isCreatingLottery } = useMeltyFi();
 
     const [selectedNFT, setSelectedNFT] = useState<NFT | null>(null);
@@ -58,10 +58,12 @@ export default function CreateLotteryPage() {
                 });
 
                 const nfts: NFT[] = objects.data
-                    .filter((obj: SuiObjectResponse) => {
+                    .filter((obj) => {
+                        // Remove explicit type annotation to let TypeScript infer
                         return obj.data?.display?.data || obj.data?.content;
                     })
-                    .map((obj: SuiObjectResponse) => {
+                    .map((obj) => {
+                        // Remove explicit type annotation here too
                         const display = obj.data?.display?.data;
                         const content = obj.data?.content;
 
@@ -90,14 +92,18 @@ export default function CreateLotteryPage() {
         if (!selectedNFT) return;
 
         try {
+            // Convert to mist (1 SUI = 1_000_000_000 mist)
             const wonkaBarPriceMist = (parseFloat(wonkaBarPrice) * 1_000_000_000).toString();
+
+            // Calculate absolute expiration timestamp
             const durationMs = parseInt(duration) * 24 * 60 * 60 * 1000;
+            const expirationTimestamp = Date.now() + durationMs;
 
             await createLottery({
                 nftId: selectedNFT.id,
                 wonkaBarPrice: wonkaBarPriceMist,
                 maxSupply,
-                duration: durationMs
+                expirationDate: expirationTimestamp // Pass as number, not string
             });
 
             // Reset form
